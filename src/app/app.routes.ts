@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { signedInGuard, signedOutGuard } from './core/guards';
+import { signedInGuard, signedOutGuard, unsavedChangesGuard } from './core/guards';
 
 export const routes: Routes = [
   // Without this, "/" matches the auth layout below with no form in it. Signed-in visitors are sent on to
@@ -49,6 +49,27 @@ export const routes: Routes = [
         path: 'jobs/:id/edit',
         title: 'Edit job | Roleveya',
         loadComponent: () => import('./features/jobs/job-form').then((m) => m.JobForm),
+      },
+      {
+        path: 'jobs/:id/tailor',
+        title: 'Tailor CV | Roleveya',
+        loadComponent: () => import('./features/studio/tailor').then((m) => m.Tailor),
+      },
+      {
+        path: 'studio',
+        title: 'CV studio | Roleveya',
+        loadComponent: () => import('./features/studio/studio').then((m) => m.Studio),
+      },
+      {
+        path: 'studio/versions/:id',
+        title: 'Saved CV | Roleveya',
+        loadComponent: () => import('./features/studio/version-view').then((m) => m.VersionView),
+      },
+      {
+        path: 'studio/:id',
+        title: 'Master CV | Roleveya',
+        loadComponent: () => import('./features/studio/master-editor').then((m) => m.MasterEditor),
+        canDeactivate: [unsavedChangesGuard],
       },
       {
         path: 'history',

@@ -99,6 +99,8 @@ export interface CvSummary {
   id: string;
   label: string;
   original_filename: string;
+  /** Set when the CV is a version saved from the CV studio. */
+  version_id: string | null;
 }
 
 export interface Cv extends CvSummary {
@@ -231,3 +233,97 @@ export interface DashboardSummary {
   upcoming_deadlines: (JobRef & { deadline: string })[];
   recent_activity: ApplicationEventWithJob[];
 }
+
+// -- CV studio ----------------------------------------------------------------------------------
+
+export type TemplateId = 'classic' | 'modern';
+
+export interface CvTemplateInfo {
+  id: TemplateId;
+  name: string;
+  description: string;
+}
+
+/** What the server can do; features that aren't set up are explained instead of failing. */
+export interface StudioStatus {
+  ai: boolean;
+  compiler: boolean;
+  word: boolean;
+  templates: CvTemplateInfo[];
+}
+
+/** A master CV (job_id null) or the working copy being tailored for a job. */
+export interface CvDocumentSummary {
+  id: string;
+  name: string;
+  template: TemplateId | null;
+  job_id: string | null;
+  based_on_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CvDocument extends CvDocumentSummary {
+  latex: string;
+}
+
+export interface LatexIssue {
+  line: number | null;
+  message: string;
+}
+
+export interface CompileResult {
+  ok: boolean;
+  pdf_base64: string | null;
+  issues: LatexIssue[];
+}
+
+/** A saved CV that can't be changed: the exact LaTeX and its PDF (a CV with this version's cv_id). */
+export interface CvVersionSummary {
+  id: string;
+  name: string;
+  cv_id: string;
+  job: JobRef | null;
+  document_id: string | null;
+  created_at: string;
+}
+
+export interface CvVersion extends CvVersionSummary {
+  latex: string;
+}
+
+export interface SkillGap {
+  skill: string;
+  importance: 'required' | 'nice_to_have';
+  advice: string;
+}
+
+export interface CvEdit {
+  kind: 'reword' | 'add_if_true';
+  section: string;
+  reason: string;
+  find: string;
+  replace: string;
+}
+
+export interface CvAnalysis {
+  id: string;
+  created_at: string;
+  model: string;
+  /** False once the CV or the job post changed after the analysis was made. */
+  current: boolean;
+  summary: string;
+  matched_skills: string[];
+  missing_skills: SkillGap[];
+  edits: CvEdit[];
+  keywords: string[];
+}
+
+export interface Tailoring {
+  draft: CvDocument | null;
+  analysis: CvAnalysis | null;
+  versions: CvVersionSummary[];
+}
+
+/** The shortest job description the API compares a CV with. */
+export const MIN_DESCRIPTION_TO_COMPARE = 80;

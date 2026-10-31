@@ -42,6 +42,10 @@
             {{ deleting() ? 'Deleting…' : 'Delete job' }}
           </button>
         } @else {
+          <a [routerLink]="['/jobs', job.id, 'tailor']" class="btn btn-primary">
+            <app-icon name="studio" [size]="18" />
+            Tailor CV
+          </a>
           <a [routerLink]="['/jobs', job.id, 'edit']" class="btn btn-secondary">Edit details</a>
           <button type="button" class="btn btn-ghost" (click)="confirmingDelete.set(true)">Delete</button>
         }
@@ -87,7 +91,9 @@
             <div>
               <dt>CV sent</dt>
               <dd>
-                @if (job.cv) {
+                @if (job.cv?.version_id) {
+                  <a [routerLink]="['/studio/versions', job.cv!.version_id]">{{ job.cv!.label }}</a>
+                } @else if (job.cv) {
                   <button type="button" class="link-btn" (click)="openCv()">{{ job.cv.label }}</button>
                 } @else {
                   None selected

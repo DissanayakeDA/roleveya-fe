@@ -61,9 +61,15 @@
                 @if (cv.is_default) {
                   <span class="badge">Default</span>
                 }
+                @if (cv.version_id) {
+                  <span class="badge tone-idle">From the CV studio</span>
+                }
               </p>
             }
-            <p class="cv-meta">{{ cv.original_filename }}, {{ size(cv.size_bytes) }}, uploaded {{ cv.created_at | date: 'MMM d, y' }}</p>
+            <p class="cv-meta">
+              {{ cv.original_filename }}, {{ size(cv.size_bytes) }}, {{ cv.version_id ? 'saved' : 'uploaded' }}
+              {{ cv.created_at | date: 'MMM d, y' }}
+            </p>
           </div>
           <div class="cv-actions">
             @if (confirmingDelete() === cv.id) {
@@ -72,6 +78,9 @@
               <button type="button" class="btn btn-danger btn-sm" (click)="remove(cv)">Delete CV</button>
             } @else {
               <button type="button" class="btn btn-secondary btn-sm" (click)="view(cv)">View</button>
+              @if (cv.version_id) {
+                <a class="btn btn-ghost btn-sm" [routerLink]="['/studio/versions', cv.version_id]">LaTeX and Word</a>
+              }
               @if (!cv.is_default) {
                 <button type="button" class="btn btn-ghost btn-sm" (click)="makeDefault(cv)">Make default</button>
               }

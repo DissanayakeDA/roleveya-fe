@@ -1,0 +1,49 @@
+<div class="page work">
+  @if (version()?.job; as job) {
+    <a [routerLink]="['/jobs', job.id]" class="back"><app-icon name="back" [size]="18" />{{ job.company }}</a>
+  } @else {
+    <a routerLink="/studio" class="back"><app-icon name="back" [size]="18" />CV studio</a>
+  }
+
+  @if (loadError()) {
+    <div class="panel empty">
+      <h2>Version not available</h2>
+      <p>{{ loadError() }}</p>
+      <a routerLink="/studio" class="btn btn-secondary">Back to the CV studio</a>
+    </div>
+  } @else if (version(); as version) {
+    <header class="work-head">
+      <div>
+        <h1 class="page-title">{{ version.name }}</h1>
+        <p class="locked">
+          <app-icon name="lock" [size]="16" />
+          Saved {{ version.created_at | date: 'MMM d, y, h:mm a' }}
+          @if (version.job; as job) {
+            for {{ job.company }}, {{ job.title | roleTitle }}.
+          }
+          A saved version can't be changed.
+        </p>
+      </div>
+      <div class="toolbar">
+        <button type="button" class="btn btn-secondary" (click)="downloadPdf(version)" [disabled]="!preview.pdfUrl()">
+          <app-icon name="download" [size]="16" /> PDF
+        </button>
+        <button type="button" class="btn btn-ghost" (click)="downloadWord(version)" [disabled]="makingWord()">
+          <app-icon name="download" [size]="16" /> {{ makingWord() ? 'Making…' : 'Word' }}
+        </button>
+        <button type="button" class="btn btn-ghost" (click)="copyLatex(version)">Copy LaTeX</button>
+        <button type="button" class="btn btn-ghost" (click)="makeMaster(version)" [disabled]="copying()">
+          Make a master CV from it
+        </button>
+      </div>
+    </header>
+
+    <div class="workbench">
+      <app-latex-editor [value]="version.latex" [readonly]="true" label="LaTeX of this version (read-only)" />
+      <app-pdf-pane [url]="preview.pdfUrl()" [status]="preview.status()" [issues]="preview.issues()"
+        emptyText="Loading the PDF…" />
+    </div>
+  } @else {
+    <p class="muted">Loading…</p>
+  }
+</div>

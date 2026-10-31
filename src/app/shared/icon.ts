@@ -13,6 +13,11 @@ const PATHS = {
   upload: 'M12 16V4M7 9l5-5 5 5M5 20h14',
   external: 'M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4',
   back: 'M15 6l-6 6 6 6',
+  studio: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4M14 3v5h5M14 3l5 5v3M9 13h4M9 17h2M20.5 14.5l-5.5 5.5H13v-2l5.5-5.5a1.4 1.4 0 0 1 2 2z',
+  download: 'M12 4v11M7 10l5 5 5-5M5 20h14',
+  check: 'M5 12.5l4.5 4.5L19 7.5',
+  play: 'M8 5.5v13l10.5-6.5z',
+  lock: 'M7 11V8a5 5 0 0 1 10 0v3M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z',
 } as const;
 
 export type IconName = keyof typeof PATHS;

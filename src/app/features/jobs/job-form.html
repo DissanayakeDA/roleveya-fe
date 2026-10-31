@@ -78,18 +78,80 @@
             <span class="hint" id="applied-hint">Leave it empty if you haven't applied yet.</span>
           }
         </div>
-        <div class="field">
-          <label for="cv_id">CV sent</label>
-          <select id="cv_id" class="control" formControlName="cv_id">
-            <option value="">None</option>
-            @for (cv of cvs(); track cv.id) {
-              <option [value]="cv.id">{{ cv.label }}{{ cv.is_default ? ' (default)' : '' }}</option>
-            }
-          </select>
-          @if (!cvs().length) {
-            <span class="hint"><a routerLink="/cvs">Upload a CV</a> to attach it to applications.</span>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <header>
+        <h2 class="section-title">The CV</h2>
+        <p>{{ editing() ? 'The CV you sent for this job.' : 'Tailor one to this post, or pick one you already have.' }}</p>
+      </header>
+      <div class="cv-plan">
+        @if (!editing()) {
+          <fieldset class="plain">
+            <legend class="sr-only">CV for this job</legend>
+            <div class="choices">
+              <label>
+                <input type="radio" formControlName="cv_plan" value="tailor" [attr.disabled]="masters().length ? null : ''" />
+                Tailor a CV for this job
+              </label>
+              <label>
+                <input type="radio" formControlName="cv_plan" value="existing" />
+                Use a CV I have
+              </label>
+            </div>
+          </fieldset>
+        }
+
+        @if (tailoring()) {
+          @if (masters().length > 1) {
+            <div class="field">
+              <label for="master_id">Start from</label>
+              <select id="master_id" class="control" formControlName="master_id">
+                @for (master of masters(); track master.id) {
+                  <option [value]="master.id">{{ master.name }}</option>
+                }
+              </select>
+            </div>
+          } @else {
+            <p>Starts from a copy of your master CV, <strong>{{ masterName() }}</strong>. The master stays as it is.</p>
           }
-        </div>
+          <div class="next-steps">
+            <p class="label">After you add the job</p>
+            <ol>
+              <li>Your CV is compared with this post: the skills it shows, what's missing and lines to reword.</li>
+              <li>Apply the suggestions you want and check the PDF.</li>
+              <li>Save the version you send. It's recorded as the CV sent for this job.</li>
+            </ol>
+          </div>
+          @if (studioStatus() && !studioStatus()!.ai) {
+            <p class="hint">AI suggestions are off on the server, so you'll edit the CV without them.</p>
+          } @else if (descriptionTooShort()) {
+            <p class="alert">
+              The comparison needs the job description (at least {{ minDescription }} characters). Add it above, or
+              you'll edit the CV without suggestions.
+            </p>
+          }
+        } @else {
+          <div class="field">
+            <label for="cv_id">CV sent</label>
+            <select id="cv_id" class="control" formControlName="cv_id">
+              <option value="">None</option>
+              @for (cv of cvs(); track cv.id) {
+                <option [value]="cv.id">{{ cv.label }}{{ cv.is_default ? ' (default)' : '' }}</option>
+              }
+            </select>
+            @if (!cvs().length) {
+              <span class="hint"><a routerLink="/cvs">Upload a CV</a> to attach it to applications.</span>
+            }
+          </div>
+          @if (!editing() && !masters().length) {
+            <p class="hint">
+              To tailor a CV to each post, <a routerLink="/studio" target="_blank">make a master CV in the CV studio</a>
+              (opens in a new tab). This form picks it up when you come back.
+            </p>
+          }
+        }
       </div>
     </section>
 
@@ -289,7 +351,7 @@
     <div class="form-actions">
       <a [routerLink]="cancelLink()" class="btn btn-ghost">Cancel</a>
       <button type="submit" class="btn btn-primary" [disabled]="saving()">
-        {{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Add job' }}
+        {{ saving() ? 'Saving…' : editing() ? 'Save changes' : tailoring() ? 'Add job and tailor CV' : 'Add job' }}
       </button>
     </div>
   </form>

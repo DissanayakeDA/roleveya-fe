@@ -1,23 +1,26 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Observable, forkJoin, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, of, switchMap } from 'rxjs';
 
-import { CvsApi, JobsApi, PreferencesApi } from '../../core/api.service';
+import { CvsApi, JobsApi, PreferencesApi, StudioApi } from '../../core/api.service';
 import { today } from '../../core/format';
 import { errorMessage } from '../../core/http';
 import {
   ALL_STATUSES,
   ApplicationStatus,
   Cv,
+  CvDocumentSummary,
   EMPLOYMENT_TYPE_LABELS,
   EmploymentType,
   JOB_SOURCES,
   Job,
   JobInput,
+  MIN_DESCRIPTION_TO_COMPARE,
   PRIORITY_LABELS,
   Priority,
   STATUS_LABELS,
+  StudioStatus,
   WORK_MODE_LABELS,
   WorkMode,
 } from '../../core/models';
@@ -38,6 +41,9 @@ const FILLABLE = {
   source: 'source',
 } as const;
 type FillableField = keyof typeof FILLABLE;
+
+/** For a new job: tailor a CV to the post after adding it, or pick a CV already sent. */
+type CvPlan = 'tailor' | 'existing';
 
 /** Fields under "More details". When editing, the section starts open if any of them has a value. */
 const DETAIL_FIELDS = [
@@ -61,11 +67,13 @@ const DETAIL_FIELDS = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './job-form.html',
   styleUrl: './job-form.scss',
+  host: { '(window:focus)': 'refreshMasters()' },
 })
 export class JobForm {
   private readonly jobs = inject(JobsApi);
   private readonly cvsApi = inject(CvsApi);
   private readonly prefsApi = inject(PreferencesApi);
+  private readonly studio = inject(StudioApi);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
 
@@ -82,6 +90,9 @@ export class JobForm {
   protected readonly currencies = CURRENCIES;
 
   protected readonly cvs = signal<Cv[]>([]);
+  protected readonly masters = signal<CvDocumentSummary[]>([]);
+  protected readonly studioStatus = signal<StudioStatus | null>(null);
+  protected readonly minDescription = MIN_DESCRIPTION_TO_COMPARE;
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -106,6 +117,9 @@ export class JobForm {
     deadline: [''],
     priority: ['medium' as Priority],
     cv_id: [''],
+    // Not saved with the job: they decide where "Add job" goes next.
+    cv_plan: ['existing' as CvPlan],
+    master_id: [''],
     salary_min: [null as number | null, Validators.min(0)],
     salary_max: [null as number | null, Validators.min(0)],
     salary_currency: ['', Validators.pattern(/^[A-Za-z]{3}$/)],
@@ -139,9 +153,20 @@ export class JobForm {
   private load(id: string | undefined): void {
     this.loading.set(true);
     const job$: Observable<Job | null> = id ? this.jobs.get(id) : of(null);
-    forkJoin({ cvs: this.cvsApi.list(), job: job$, prefs: id ? of(null) : this.prefsApi.get() }).subscribe({
-      next: ({ cvs, job, prefs }) => {
+    // The form works without the CV studio, so its data is optional.
+    const masters$ = id ? of([]) : this.studio.documents().pipe(catchError(() => of([])));
+    const studio$ = id ? of(null) : this.studio.status().pipe(catchError(() => of(null)));
+    forkJoin({
+      cvs: this.cvsApi.list(),
+      job: job$,
+      prefs: id ? of(null) : this.prefsApi.get(),
+      masters: masters$,
+      studio: studio$,
+    }).subscribe({
+      next: ({ cvs, job, prefs, masters, studio }) => {
         this.cvs.set(cvs);
+        this.studioStatus.set(studio);
+        this.setMasters(masters);
         if (job) {
           this.loadedJob = job;
           this.form.patchValue({
@@ -176,6 +201,36 @@ export class JobForm {
         this.error.set(errorMessage(err, "The form couldn't be loaded. Refresh to try again."));
       },
     });
+  }
+
+  /** Tailoring is the default once there's a master CV to start from, unless the user already chose. */
+  private setMasters(masters: CvDocumentSummary[]): void {
+    this.masters.set(masters);
+    const { cv_plan, master_id } = this.form.controls;
+    if (!masters.some((master) => master.id === master_id.value)) {
+      master_id.setValue(masters[0]?.id ?? '');
+    }
+    if (cv_plan.pristine) {
+      cv_plan.setValue(masters.length ? 'tailor' : 'existing');
+    }
+  }
+
+  /** After making a master CV in another tab, coming back to the form offers tailoring without a reload. */
+  protected refreshMasters(): void {
+    if (this.editing() || this.loading() || this.masters().length) return;
+    this.studio.documents().subscribe({ next: (masters) => this.setMasters(masters), error: () => {} });
+  }
+
+  protected tailoring(): boolean {
+    return !this.editing() && this.form.controls.cv_plan.value === 'tailor' && this.masters().length > 0;
+  }
+
+  protected masterName(): string {
+    return this.masters().find((master) => master.id === this.form.controls.master_id.value)?.name ?? '';
+  }
+
+  protected descriptionTooShort(): boolean {
+    return this.form.controls.description.value.trim().length < MIN_DESCRIPTION_TO_COMPARE;
   }
 
   /** Fills the form from a post. Anything the user already typed is kept. */
@@ -257,13 +312,18 @@ export class JobForm {
     const id = this.id();
     const save$ = id ? this.jobs.update(id, body) : this.jobs.create(body);
     const poster = this.posterFile() ?? this.screenshot();
+    const master = this.tailoring() ? this.form.controls.master_id.value : null;
 
     save$
       .pipe(switchMap((job) => (poster && !id ? this.jobs.uploadPoster(job.id, poster) : of(job))))
       .subscribe({
         next: (job) => {
           this.toast.show(id ? 'Changes saved.' : 'Job added.');
-          this.router.navigate(['/jobs', job.id]);
+          if (master) {
+            this.router.navigate(['/jobs', job.id, 'tailor'], { queryParams: { master } });
+          } else {
+            this.router.navigate(['/jobs', job.id]);
+          }
         },
         error: (err) => {
           this.saving.set(false);
@@ -312,7 +372,8 @@ export class JobForm {
       priority: v.priority,
       deadline: v.deadline || null,
       applied_on: v.applied_on || null,
-      cv_id: v.cv_id || null,
+      // A tailored CV becomes the CV sent when its version is saved.
+      cv_id: this.tailoring() ? null : v.cv_id || null,
     };
     if (!this.editing()) {
       body.status = v.status;

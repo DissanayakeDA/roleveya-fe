@@ -1,0 +1,122 @@
+// Shared by the master CV editor, the tailoring page and the saved-version page.
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 18px;
+  color: var(--ink-2);
+  font-weight: 650;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--ink);
+  }
+}
+
+// The editor pages use the full width: code on the left, the paper on the right.
+.page.work {
+  max-width: 1480px;
+}
+
+.work-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin-bottom: 18px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-state {
+  margin-right: 6px;
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--ink-3);
+
+  &.dirty {
+    color: var(--ink-2);
+  }
+}
+
+.workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  height: clamp(560px, calc(100vh - 220px), 1100px);
+
+  > * {
+    min-height: 0;
+  }
+
+  @media (max-width: 1060px) {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+
+    > * {
+      height: 70vh;
+    }
+  }
+}
+
+.kbd-hint {
+  margin-top: 8px;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+}
+
+kbd {
+  padding: 0 5px;
+  border: 1px solid var(--keyline-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--keyline);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+
+  .field {
+    flex: 1 1 260px;
+  }
+
+  .hint {
+    flex-basis: 100%;
+  }
+}
+
+.name-field {
+  min-width: min(100%, 360px);
+
+  .control {
+    font-size: var(--step-1);
+    font-weight: 750;
+  }
+}
+
+.locked {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--ink-2);
+}
