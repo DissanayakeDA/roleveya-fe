@@ -30,6 +30,7 @@ export class Shell {
     { path: '/jobs', label: 'Jobs', icon: 'jobs' },
     { path: '/history', label: 'History', icon: 'history' },
     { path: '/cvs', label: 'CVs', icon: 'cv' },
+    { path: '/studio', label: 'CV studio', icon: 'studio' },
     { path: '/preferences', label: 'Preferences', icon: 'preferences' },
   ];
 

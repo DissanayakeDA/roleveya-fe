@@ -1,0 +1,276 @@
+<div class="page work">
+  <a [routerLink]="['/jobs', id()]" class="back"><app-icon name="back" [size]="18" />Back to the job</a>
+
+  @if (loadError()) {
+    <div class="panel empty">
+      <h2>Job not available</h2>
+      <p>{{ loadError() }}</p>
+      <a routerLink="/jobs" class="btn btn-secondary">Back to jobs</a>
+    </div>
+  } @else if (loaded() && job(); as job) {
+    <header class="work-head">
+      <div>
+        <h1 class="page-title">Tailor your CV</h1>
+        <p class="for-job">For {{ job.company }}, {{ job.title | roleTitle }}</p>
+      </div>
+      @if (draft()) {
+        <div class="toolbar">
+          <span class="save-state" [class.dirty]="unsaved()" aria-live="polite">
+            {{ saveFailed() ? "Couldn't save your edits" : unsaved() ? 'Saving…' : 'Edits saved' }}
+          </span>
+          <button type="button" class="btn btn-secondary" (click)="compile()"
+            [disabled]="compiler.busy() || !status()?.compiler">
+            <app-icon name="play" [size]="16" />
+            {{ compiler.busy() ? 'Compiling…' : 'Compile' }}
+          </button>
+          <button type="button" class="btn btn-ghost" (click)="downloadPdf()" [disabled]="!pdfReady()"
+            [attr.title]="pdfReady() ? null : 'Compile first'">
+            <app-icon name="download" [size]="16" /> PDF
+          </button>
+          <button type="button" class="btn btn-ghost" (click)="downloadWord()" [disabled]="makingWord() || !status()?.word">
+            <app-icon name="download" [size]="16" /> {{ makingWord() ? 'Making…' : 'Word' }}
+          </button>
+        </div>
+      }
+    </header>
+
+    @if (!masters().length && !draft()) {
+      <div class="panel empty">
+        <h2>Start with a master CV</h2>
+        <p>Tailoring works on a copy of your master CV. Make one in the CV studio from a template, your LaTeX or a PDF.</p>
+        <a routerLink="/studio" class="btn btn-primary">Open the CV studio</a>
+      </div>
+    } @else if (!draft() || picking()) {
+      <section class="panel picker" aria-labelledby="pick-title">
+        <h2 id="pick-title" class="section-title">{{ draft() ? 'Start again from a master CV' : 'Choose the CV to start from' }}</h2>
+        <p class="muted">
+          You'll edit a copy for this job.
+          @if (draft()) {
+            Starting again replaces the edits you've made here. Versions you've saved aren't affected.
+          } @else {
+            The master CV stays as it is.
+          }
+        </p>
+        <div class="picker-row">
+          <div class="field">
+            <label for="master">Master CV</label>
+            <select id="master" class="control" [(ngModel)]="masterId">
+              @for (master of masters(); track master.id) {
+                <option [value]="master.id">{{ master.name }}</option>
+              }
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary" (click)="startDraft()" [disabled]="starting() || !masterId">
+            {{ starting() ? 'Starting…' : draft() ? 'Start again' : 'Start tailoring' }}
+          </button>
+          @if (draft()) {
+            <button type="button" class="btn btn-ghost" (click)="picking.set(false)">Cancel</button>
+          }
+        </div>
+      </section>
+    } @else {
+      <p class="copy-of">
+        A copy of {{ masterName(draft()!.based_on_id) ?? 'your master CV' }}, for this job only.
+        <button type="button" class="link-btn" (click)="picking.set(true)">Start again from a master CV</button>
+      </p>
+
+      <div class="workbench">
+        <div class="left">
+          <div class="tabs" role="tablist" aria-label="Tailoring">
+            <button type="button" role="tab" id="tab-suggestions" [attr.aria-selected]="tab() === 'suggestions'"
+              aria-controls="panel-suggestions" (click)="tab.set('suggestions')">Suggestions</button>
+            <button type="button" role="tab" id="tab-latex" [attr.aria-selected]="tab() === 'latex'"
+              aria-controls="panel-latex" (click)="tab.set('latex')">LaTeX</button>
+          </div>
+
+          <div class="tab-panel suggestions" id="panel-suggestions" role="tabpanel" aria-labelledby="tab-suggestions"
+            [hidden]="tab() !== 'suggestions'">
+            @if (!hasDescription()) {
+              <div class="notice">
+                <p>Suggestions compare your CV with the job description. Add the full description to this job first.</p>
+                <a [routerLink]="['/jobs', job.id, 'edit']" class="btn btn-secondary btn-sm">Add the description</a>
+              </div>
+            } @else if (!status()?.ai) {
+              <div class="notice">
+                <p>AI suggestions are off until a Groq API key is added to the API's settings. You can still edit the
+                  LaTeX and save versions.</p>
+              </div>
+            } @else if (!analysis()) {
+              <div class="notice">
+                <p>Find out which skills from the post your CV shows, what's missing, and which lines to reword.</p>
+                <button type="button" class="btn btn-primary" (click)="analyse()" [disabled]="analysing()">
+                  {{ analysing() ? 'Comparing… (about 10 seconds)' : 'Compare my CV with this job' }}
+                </button>
+                <p class="hint">Sends the job post and your CV's text to Groq's AI. Nothing changes until you apply a
+                  suggestion.</p>
+              </div>
+            } @else if (analysis(); as result) {
+              @if (!analysisCurrent()) {
+                <div class="notice compact">
+                  <p>You've edited the CV or the job since this comparison.</p>
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="analyse(true)" [disabled]="analysing()">
+                    {{ analysing() ? 'Comparing…' : 'Compare again' }}
+                  </button>
+                </div>
+              }
+
+              <p class="summary">{{ result.summary }}</p>
+
+              @if (coverage(); as c) {
+                <section class="block" aria-labelledby="skills-title">
+                  <h3 id="skills-title">Skills the post asks for</h3>
+                  <p class="tally">
+                    Your CV shows <strong>{{ c.matched }} of {{ c.total }}</strong>.
+                    @if (requiredGaps()) {
+                      {{ requiredGaps() }} missing {{ requiredGaps() === 1 ? 'one is' : 'ones are' }} marked as required.
+                    }
+                  </p>
+                  @if (result.matched_skills.length) {
+                    <ul class="skills" aria-label="In your CV">
+                      @for (skill of result.matched_skills; track skill) {
+                        <li class="have"><app-icon name="check" [size]="14" />{{ skill }}</li>
+                      }
+                    </ul>
+                  }
+                  @if (result.missing_skills.length) {
+                    <ul class="gaps" aria-label="Not in your CV">
+                      @for (gap of result.missing_skills; track gap.skill) {
+                        <li>
+                          <p class="gap-head">
+                            <strong>{{ gap.skill }}</strong>
+                            <span class="badge" [class.tone-loss]="gap.importance === 'required'"
+                              [class.tone-idle]="gap.importance !== 'required'">
+                              {{ gap.importance === 'required' ? 'Required' : 'Nice to have' }}
+                            </span>
+                          </p>
+                          <p class="gap-advice">{{ gap.advice }}</p>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </section>
+              }
+
+              @if (result.edits.length) {
+                <section class="block" aria-labelledby="edits-title">
+                  <h3 id="edits-title">Suggested edits</h3>
+                  <ol class="edits">
+                    @for (edit of result.edits; track $index; let i = $index) {
+                      @let state = editStates()[i];
+                      <li [class.done]="state === 'applied'">
+                        <p class="edit-head">
+                          <span class="edit-where">{{ edit.section }}</span>
+                          @if (edit.kind === 'add_if_true') {
+                            <span class="badge tone-closed">Only if it's true</span>
+                          }
+                        </p>
+                        <p class="edit-reason">{{ edit.reason }}</p>
+                        <div class="diff">
+                          <p class="was"><span class="sr-only">Now: </span>{{ edit.find }}</p>
+                          <p class="becomes"><span class="sr-only">Suggested: </span>{{ edit.replace }}</p>
+                        </div>
+                        <div class="edit-actions">
+                          @switch (state) {
+                            @case ('ready') {
+                              <button type="button" class="btn btn-secondary btn-sm" (click)="apply(i, edit)">Apply</button>
+                            }
+                            @case ('applied') {
+                              <span class="applied"><app-icon name="check" [size]="16" />Applied</span>
+                              <button type="button" class="btn btn-ghost btn-sm" (click)="undo(i, edit)">Undo</button>
+                            }
+                            @default {
+                              <span class="hint">This text isn't in your CV as written, so make the change by hand.</span>
+                            }
+                          }
+                          @if (state !== 'missing') {
+                            <button type="button" class="btn btn-ghost btn-sm" (click)="show(edit, state)">Show in LaTeX</button>
+                          }
+                        </div>
+                      </li>
+                    }
+                  </ol>
+                </section>
+              }
+
+              @if (result.keywords.length) {
+                <section class="block" aria-labelledby="keywords-title">
+                  <h3 id="keywords-title">Words from the post to use</h3>
+                  <ul class="keywords">
+                    @for (word of result.keywords; track word) {
+                      <li>{{ word }}</li>
+                    }
+                  </ul>
+                </section>
+              }
+
+              <p class="hint made">
+                Compared {{ result.created_at | date: 'MMM d, h:mm a' }}. AI suggestions can be wrong, so read each one
+                before you apply it.
+                @if (analysisCurrent()) {
+                  <button type="button" class="link-btn" (click)="analyse(true)" [disabled]="analysing()">
+                    {{ analysing() ? 'Comparing…' : 'Compare again' }}
+                  </button>
+                }
+              </p>
+            }
+            @if (analysisError()) {
+              <p class="alert" role="alert">{{ analysisError() }}</p>
+            }
+          </div>
+
+          <div class="tab-panel" id="panel-latex" role="tabpanel" aria-labelledby="tab-latex" [hidden]="tab() !== 'latex'">
+            <app-latex-editor [(value)]="source" [issues]="compiler.issues()" (compile)="compile()" (save)="compile()" />
+          </div>
+        </div>
+
+        <app-pdf-pane [url]="compiler.pdfUrl()" [status]="compiler.status()" [issues]="compiler.issues()" [stale]="stale()"
+          [emptyText]="status()?.compiler ? 'Compile to see your CV here.' : 'PDF compiling isn\'t set up on the server yet.'"
+          (lineClick)="goToLine($event)" />
+      </div>
+
+      <section class="panel save-version" aria-labelledby="save-title">
+        <div class="save-text">
+          <h2 id="save-title" class="section-title">Save this version</h2>
+          <p class="muted">
+            Saves the PDF and its LaTeX as they are now. A saved version can't be changed, so it's a record of exactly
+            what you sent. You can save another at any time.
+          </p>
+        </div>
+        <div class="save-form">
+          <div class="field">
+            <label for="version-name">Name</label>
+            <input id="version-name" class="control" [(ngModel)]="versionName" maxlength="120" />
+          </div>
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="useForJob" />
+            Mark it as the CV sent for this job
+          </label>
+          <button type="button" class="btn btn-primary" (click)="saveVersion()"
+            [disabled]="savingVersion() || !versionName.trim() || !status()?.compiler">
+            <app-icon name="lock" [size]="16" />
+            {{ savingVersion() ? 'Saving…' : 'Save version' }}
+          </button>
+        </div>
+      </section>
+
+      @if (versions().length) {
+        <section class="saved" aria-labelledby="saved-title">
+          <h2 id="saved-title" class="section-title">Saved for this job</h2>
+          <ul>
+            @for (version of versions(); track version.id) {
+              <li>
+                <a [routerLink]="['/studio/versions', version.id]">{{ version.name }}</a>
+                <span class="muted">saved {{ version.created_at | date: 'MMM d, y, h:mm a' }}</span>
+                @if (job.cv?.id === version.cv_id) {
+                  <span class="badge">Sent</span>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+  } @else {
+    <p class="muted">Loading…</p>
+  }
+</div>

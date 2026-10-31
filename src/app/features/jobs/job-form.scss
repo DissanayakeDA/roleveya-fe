@@ -26,6 +26,43 @@ input[type='file'] {
   background: #f8faff;
 }
 
+.cv-plan {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  max-width: 560px;
+
+  > p:not(.hint):not(.alert) {
+    color: var(--ink-2);
+  }
+
+  .choices label:has(input:disabled) {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.next-steps {
+  padding: 14px 16px;
+  border-left: 3px solid var(--sign);
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  background: var(--sign-wash);
+
+  .label {
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  ol {
+    display: grid;
+    gap: 4px;
+    margin: 6px 0 0;
+    padding-left: 1.3em;
+    font-size: 0.925rem;
+    color: var(--ink-2);
+  }
+}
+
 .more {
   border-top: 1px solid var(--keyline);
 

@@ -1,0 +1,199 @@
+<div class="page narrow">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">CV studio</h1>
+      <p class="page-sub">
+        Keep your CV as LaTeX, tailor a copy for each job you apply for, and save the exact PDF you send.
+      </p>
+    </div>
+  </header>
+
+  @if (loadError()) {
+    <p class="alert" role="alert">{{ loadError() }}</p>
+  } @else if (loading()) {
+    <p class="muted">Loading the CV studio…</p>
+  } @else {
+    @if (status(); as s) {
+      @if (!s.compiler) {
+        <p class="alert setup">
+          PDF compiling isn't set up on the server yet, so previews and PDF downloads won't work. You can still edit LaTeX
+          and download Word files. To turn it on, install Tectonic (see "CV studio" in the API's README).
+        </p>
+      }
+      @if (!s.ai) {
+        <p class="alert info setup">
+          AI suggestions and PDF conversion are off until a Groq API key is added to the API's settings.
+        </p>
+      }
+    }
+
+    <section class="block" aria-labelledby="masters-title">
+      <h2 id="masters-title" class="section-title">Master CVs</h2>
+      <p class="section-sub">Your full CV. Tailoring for a job works on a copy, so these stay as they are.</p>
+      @if (documents().length) {
+        <ul class="doc-list">
+          @for (doc of documents(); track doc.id) {
+            <li>
+              <div class="doc-main">
+                <a class="doc-name" [routerLink]="['/studio', doc.id]">{{ doc.name }}</a>
+                <p class="doc-meta">
+                  {{ doc.template ? templateNames().get(doc.template) + ' template' : 'Your own LaTeX' }}, edited
+                  {{ doc.updated_at | date: 'MMM d, y' }}
+                </p>
+              </div>
+              <div class="doc-actions">
+                @if (confirmingDelete() === doc.id) {
+                  <span class="confirm-text">Delete this master CV?</span>
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="confirmingDelete.set(null)">Keep it</button>
+                  <button type="button" class="btn btn-danger btn-sm" (click)="remove(doc)">Delete</button>
+                } @else {
+                  <a class="btn btn-secondary btn-sm" [routerLink]="['/studio', doc.id]">Open</a>
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="confirmingDelete.set(doc.id)">Delete</button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="muted none">No master CV yet. Start one below.</p>
+      }
+    </section>
+
+    <section class="panel start" aria-labelledby="start-title">
+      <h2 id="start-title" class="section-title">Start a master CV</h2>
+
+      <div class="choices modes" role="radiogroup" aria-label="How to start">
+        <label>
+          <input type="radio" name="mode" value="template" [checked]="mode() === 'template'" (change)="setMode('template')" />
+          From a template
+        </label>
+        <label>
+          <input type="radio" name="mode" value="paste" [checked]="mode() === 'paste'" (change)="setMode('paste')" />
+          Paste LaTeX
+        </label>
+        <label>
+          <input type="radio" name="mode" value="convert" [checked]="mode() === 'convert'" (change)="setMode('convert')" />
+          Convert a PDF
+        </label>
+      </div>
+
+      <div class="start-body">
+        <div class="field name">
+          <label for="doc-name">Name</label>
+          <input id="doc-name" class="control" [(ngModel)]="name" maxlength="120" />
+        </div>
+
+        @if (mode() === 'paste') {
+          <div class="field">
+            <label for="pasted">LaTeX source</label>
+            <textarea id="pasted" class="control code" rows="12" [(ngModel)]="pasted" spellcheck="false"
+              autocapitalize="off" placeholder="\documentclass{article} …"></textarea>
+            <span class="hint">
+              The whole document, from \documentclass to \end{{ '{' }}document{{ '}' }}. Common CV packages work. Images and
+              extra files can't be used.
+            </span>
+          </div>
+        }
+
+        @if (mode() === 'convert') {
+          @if (!status()?.ai) {
+            <p class="alert info">Converting a PDF uses the AI, which isn't set up yet.</p>
+          } @else {
+            <div class="field">
+              <label for="convert-from">PDF to convert</label>
+              <select id="convert-from" class="control" [(ngModel)]="convertFrom">
+                <option value="upload">Upload a PDF</option>
+                @for (cv of uploadedCvs(); track cv.id) {
+                  <option [value]="cv.id">{{ cv.label }}, from your CVs</option>
+                }
+              </select>
+            </div>
+            @if (convertFrom === 'upload') {
+              @if (pdf(); as file) {
+                <p class="file-line">
+                  <app-icon name="cv" />
+                  <span><strong>{{ file.name }}</strong> <span class="muted">{{ size(file.size) }}</span></span>
+                  <button type="button" class="link-btn" (click)="pdf.set(null)">Choose another</button>
+                </p>
+              } @else {
+                <label class="drop" [class.over]="dragging()" (dragover)="onDragOver($event)"
+                  (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+                  <app-icon name="upload" [size]="22" />
+                  <strong>Drop your CV's PDF here, or choose a file</strong>
+                  <span class="hint">PDF, up to {{ maxPdfMb }} MB. Scanned PDFs are read with OCR.</span>
+                  <input type="file" accept=".pdf,application/pdf" class="sr-only" #picker (change)="onPick(picker)" />
+                </label>
+              }
+            }
+            <p class="hint">
+              The text of your CV is sent to Groq's AI, which sorts it into sections without changing your wording. The
+              layout will be the template's, not your PDF's, so check the result.
+            </p>
+          }
+        }
+
+        @if (mode() !== 'paste') {
+          <fieldset class="plain">
+            <legend>Template</legend>
+            <div class="templates">
+              @for (t of status()?.templates ?? []; track t.id) {
+                <label class="template">
+                  <input type="radio" name="template" [value]="t.id" [(ngModel)]="template" />
+                  <span class="sample" [class]="'sample sample-' + t.id" aria-hidden="true">
+                    <i class="s-name"></i><i class="s-sub"></i><i class="s-rule"></i><i class="s-line"></i>
+                    <i class="s-line short"></i><i class="s-rule"></i><i class="s-line"></i><i class="s-line short"></i>
+                  </span>
+                  <span class="template-text">
+                    <strong>{{ t.name }}</strong>
+                    <span class="hint">{{ t.description }}</span>
+                  </span>
+                </label>
+              }
+            </div>
+          </fieldset>
+        }
+
+        @if (startError()) {
+          <p class="alert" role="alert">{{ startError() }}</p>
+        }
+        <div class="start-actions">
+          <button type="button" class="btn btn-primary" (click)="start()"
+            [disabled]="working() || (mode() === 'convert' && !status()?.ai)">
+            {{ startLabel() }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="versions-title">
+      <h2 id="versions-title" class="section-title">Saved versions</h2>
+      <p class="section-sub">
+        A saved version can't be changed, so it's always exactly the CV you sent. They're on the CVs page too.
+      </p>
+      @if (versions().length) {
+        <ul class="doc-list">
+          @for (version of versions(); track version.id) {
+            <li>
+              <div class="doc-main">
+                <a class="doc-name" [routerLink]="['/studio/versions', version.id]">{{ version.name }}</a>
+                <p class="doc-meta">
+                  @if (version.job; as job) {
+                    For {{ job.company }}, {{ job.title | roleTitle }}.
+                  } @else {
+                    Saved from a master CV.
+                  }
+                  Saved {{ version.created_at | date: 'MMM d, y' }}
+                </p>
+              </div>
+              <div class="doc-actions">
+                <a class="btn btn-secondary btn-sm" [routerLink]="['/studio/versions', version.id]">Open</a>
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="muted none">None yet. Tailor a CV from a job's page, or save a master CV as a PDF.</p>
+      }
+    </section>
+  }
+</div>

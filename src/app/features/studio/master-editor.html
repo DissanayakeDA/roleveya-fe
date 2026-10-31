@@ -1,0 +1,67 @@
+<div class="page work">
+  <a routerLink="/studio" class="back"><app-icon name="back" [size]="18" />CV studio</a>
+
+  @if (loadError()) {
+    <div class="panel empty">
+      <h2>CV not available</h2>
+      <p>{{ loadError() }}</p>
+      <a routerLink="/studio" class="btn btn-secondary">Back to the CV studio</a>
+    </div>
+  } @else if (loaded()) {
+    <header class="work-head">
+      <div class="field name-field">
+        <label for="doc-name">Master CV</label>
+        <input id="doc-name" class="control" [ngModel]="name()" (ngModelChange)="name.set($event)" maxlength="120" />
+      </div>
+      <div class="toolbar">
+        <span class="save-state" [class.dirty]="dirty()" aria-live="polite">{{ dirty() ? 'Unsaved changes' : 'All changes saved' }}</span>
+        <button type="button" class="btn btn-secondary" (click)="compile()"
+          [disabled]="compiler.busy() || !status()?.compiler">
+          <app-icon name="play" [size]="16" />
+          {{ compiler.busy() ? 'Compiling…' : 'Compile' }}
+        </button>
+        <button type="button" class="btn btn-primary" (click)="save()" [disabled]="saving() || !dirty()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+        <button type="button" class="btn btn-ghost" (click)="downloadPdf()" [disabled]="!pdfReady()"
+          [attr.title]="pdfReady() ? null : 'Compile first'">
+          <app-icon name="download" [size]="16" /> PDF
+        </button>
+        <button type="button" class="btn btn-ghost" (click)="downloadWord()" [disabled]="makingWord() || !status()?.word">
+          <app-icon name="download" [size]="16" /> {{ makingWord() ? 'Making…' : 'Word' }}
+        </button>
+        <button type="button" class="btn btn-ghost" (click)="openSnapshot()" [disabled]="!status()?.compiler">
+          Save as a PDF CV
+        </button>
+      </div>
+    </header>
+
+    @if (snapshotOpen()) {
+      <form class="inline-form" (ngSubmit)="snapshot()">
+        <div class="field">
+          <label for="snapshot-name">Name for the PDF CV</label>
+          <input id="snapshot-name" class="control" name="snapshotName" [(ngModel)]="snapshotName" maxlength="120" />
+        </div>
+        <button type="submit" class="btn btn-primary" [disabled]="snapshotting() || !snapshotName.trim()">
+          {{ snapshotting() ? 'Saving…' : 'Save PDF CV' }}
+        </button>
+        <button type="button" class="btn btn-ghost" (click)="snapshotOpen.set(false)">Cancel</button>
+        <p class="hint">
+          Saves this CV as it is now. A saved version can't be changed, and you can pick it as the CV sent when you add a
+          job. To tailor it for one job instead, open the job and choose Tailor CV.
+        </p>
+      </form>
+    }
+
+    <div class="workbench">
+      <app-latex-editor [(value)]="source" [issues]="compiler.issues()" (save)="save()" (compile)="compile()"
+        describedBy="editor-keys" />
+      <app-pdf-pane [url]="compiler.pdfUrl()" [status]="compiler.status()" [issues]="compiler.issues()" [stale]="stale()"
+        [emptyText]="status()?.compiler ? 'Compile to see your CV here.' : 'PDF compiling isn\'t set up on the server yet.'"
+        (lineClick)="goToLine($event)" />
+    </div>
+    <p class="kbd-hint" id="editor-keys"><kbd>Ctrl</kbd> + <kbd>S</kbd> saves and <kbd>Ctrl</kbd> + <kbd>Enter</kbd> compiles.</p>
+  } @else {
+    <p class="muted">Loading your CV…</p>
+  }
+</div>

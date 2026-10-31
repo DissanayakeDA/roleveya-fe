@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { CvsApi } from '../../core/api.service';
 import { fileSize } from '../../core/format';
@@ -15,7 +15,7 @@ const MAX_MB = 5;
 
 @Component({
   selector: 'app-cvs',
-  imports: [DatePipe, FormsModule, FileViewer, Icon],
+  imports: [DatePipe, FormsModule, RouterLink, FileViewer, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './cvs.html',
   styleUrl: './cvs.scss',

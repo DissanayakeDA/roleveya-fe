@@ -77,3 +77,21 @@ export function describeEvent(event: ApplicationEvent): string {
       return 'Note';
   }
 }
+
+/** Saves a blob the API returned as a file download, without exposing any storage URL. */
+export function saveFile(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** A file name from something the user typed, e.g. "Acme backend CV" -> "Acme backend CV.pdf". */
+export function fileName(name: string, extension: string): string {
+  const base = name.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'CV';
+  return `${base}.${extension}`;
+}

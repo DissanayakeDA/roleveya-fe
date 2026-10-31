@@ -6,7 +6,13 @@ import {
   ApplicationEvent,
   ApplicationEventWithJob,
   ApplicationStatus,
+  CompileResult,
   Cv,
+  CvAnalysis,
+  CvDocument,
+  CvDocumentSummary,
+  CvVersion,
+  CvVersionSummary,
   DashboardSummary,
   EventType,
   ExtractedJob,
@@ -16,6 +22,9 @@ import {
   JobListItem,
   Page,
   Preferences,
+  StudioStatus,
+  Tailoring,
+  TemplateId,
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -149,5 +158,93 @@ export class InsightsApi {
       params = params.set('event_type', eventType);
     }
     return this.http.get<Page<ApplicationEventWithJob>>(apiUrl('/history'), { params });
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class StudioApi {
+  private readonly http = inject(HttpClient);
+
+  status() {
+    return this.http.get<StudioStatus>(apiUrl('/studio/status'));
+  }
+
+  /** Master CVs (not the per-job working copies). */
+  documents() {
+    return this.http.get<CvDocumentSummary[]>(apiUrl('/cv-documents'));
+  }
+
+  document(id: string) {
+    return this.http.get<CvDocument>(apiUrl(`/cv-documents/${id}`));
+  }
+
+  createDocument(body: { name: string; template?: TemplateId; latex?: string }) {
+    return this.http.post<CvDocument>(apiUrl('/cv-documents'), body);
+  }
+
+  updateDocument(id: string, body: { name?: string; latex?: string }) {
+    return this.http.patch<CvDocument>(apiUrl(`/cv-documents/${id}`), body);
+  }
+
+  removeDocument(id: string) {
+    return this.http.delete<void>(apiUrl(`/cv-documents/${id}`));
+  }
+
+  /** Reads a CV PDF (an upload or one of the user's CVs) into a template. Uses the AI. */
+  convertPdf(source: { file: File } | { cvId: string }, template: TemplateId, name: string | null) {
+    const form = new FormData();
+    if ('file' in source) {
+      form.append('file', source.file);
+    } else {
+      form.append('cv_id', source.cvId);
+    }
+    form.append('template', template);
+    if (name) {
+      form.append('name', name);
+    }
+    return this.http.post<CvDocument>(apiUrl('/cv-documents/convert'), form);
+  }
+
+  /** Saves a master CV as it is now as a PDF CV (an unchangeable version). */
+  snapshot(id: string, name: string) {
+    return this.http.post<CvVersionSummary>(apiUrl(`/cv-documents/${id}/versions`), { name });
+  }
+
+  compile(latex: string) {
+    return this.http.post<CompileResult>(apiUrl('/latex/compile'), { latex });
+  }
+
+  word(latex: string, filename: string) {
+    return this.http.post(apiUrl('/latex/docx'), { latex, filename }, { responseType: 'blob' });
+  }
+
+  versions(jobId?: string) {
+    const params = jobId ? new HttpParams().set('job_id', jobId) : undefined;
+    return this.http.get<CvVersionSummary[]>(apiUrl('/cv-versions'), { params });
+  }
+
+  version(id: string) {
+    return this.http.get<CvVersion>(apiUrl(`/cv-versions/${id}`));
+  }
+
+  versionWord(id: string) {
+    return this.http.get(apiUrl(`/cv-versions/${id}/docx`), { responseType: 'blob' });
+  }
+
+  tailoring(jobId: string) {
+    return this.http.get<Tailoring>(apiUrl(`/jobs/${jobId}/tailoring`));
+  }
+
+  /** Starts (or restarts) the job's working copy from a master CV. */
+  startDraft(jobId: string, masterId: string) {
+    return this.http.post<CvDocument>(apiUrl(`/jobs/${jobId}/tailoring/draft`), { master_id: masterId });
+  }
+
+  analyse(jobId: string, latex: string, refresh = false) {
+    return this.http.post<CvAnalysis>(apiUrl(`/jobs/${jobId}/tailoring/analysis`), { latex, refresh });
+  }
+
+  saveVersion(jobId: string, body: { name: string; latex: string; use_for_job: boolean }) {
+    return this.http.post<CvVersionSummary>(apiUrl(`/jobs/${jobId}/tailoring/versions`), body);
   }
 }
