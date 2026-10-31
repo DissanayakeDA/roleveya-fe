@@ -1,0 +1,31 @@
+.account {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 12px 20px;
+  margin: 0;
+
+  dt {
+    font-size: 0.85rem;
+    font-weight: 650;
+    color: var(--ink-3);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.form-actions {
+  align-items: center;
+}
+
+.saved-at {
+  margin-right: auto;
+  font-size: 0.875rem;
+}

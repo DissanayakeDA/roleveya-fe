@@ -1,0 +1,229 @@
+.route-panel {
+  padding: 28px 24px 22px;
+  border: 1px solid var(--keyline);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+$track: 6px;
+$stop: 24px;
+$here: 34px;
+
+.line {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    position: relative;
+
+    /* Track segment from the previous station into this one. */
+    &:not(:first-child)::before {
+      content: '';
+      position: absolute;
+      top: calc($here / 2 - $track / 2);
+      left: -50%;
+      right: 50%;
+      height: $track;
+      background: var(--keyline);
+    }
+
+    &.passed::before,
+    &.here::before {
+      background: var(--sign);
+    }
+  }
+
+  button {
+    position: relative;
+    z-index: 1; /* stations sit on top of the track segments */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 0 4px 6px;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: none;
+    color: var(--ink-3);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 650;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: progress;
+    }
+  }
+
+  .stop {
+    display: grid;
+    place-items: center;
+    width: $here;
+    height: $here;
+
+    &::after {
+      content: '';
+      width: $stop;
+      height: $stop;
+      border: 5px solid var(--keyline-strong);
+      border-radius: 50%;
+      background: var(--surface);
+      transition: transform 140ms ease;
+    }
+  }
+
+  button:hover:not(:disabled) .stop::after {
+    transform: scale(1.12);
+  }
+
+  .passed {
+    button {
+      color: var(--ink-2);
+    }
+
+    .stop::after {
+      border-color: var(--sign);
+    }
+  }
+
+  /* You are here. */
+  .here {
+    button {
+      color: var(--ink);
+      font-weight: 800;
+      cursor: default;
+    }
+
+    .stop::after {
+      width: $here;
+      height: $here;
+      border: 6px solid var(--sign);
+      background: var(--signal);
+    }
+  }
+
+  button[aria-pressed='true'] .stop::after {
+    border-style: dashed;
+  }
+
+  &.closed li.passed::before,
+  &.closed .passed .stop::after {
+    opacity: 0.55;
+  }
+}
+
+.exits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--keyline);
+}
+
+.exits-label {
+  margin-right: 6px;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--ink-3);
+}
+
+.exit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 13px 0 10px;
+  border: 1px solid var(--keyline-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--ink-3);
+  }
+
+  .terminus {
+    width: 12px;
+    height: 12px;
+    border: 3px solid currentColor;
+    border-radius: 3px;
+  }
+
+  &.here {
+    cursor: default;
+    font-weight: 800;
+
+    &.tone-loss {
+      border-color: var(--loss);
+      background: var(--loss-wash);
+      color: var(--loss);
+    }
+
+    &.tone-closed {
+      border-color: var(--closed);
+      background: var(--closed-wash);
+      color: var(--closed);
+    }
+
+    .terminus {
+      background: currentColor;
+    }
+  }
+
+  &[aria-pressed='true'] {
+    border-style: dashed;
+    border-color: var(--sign);
+  }
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: var(--radius-control);
+  background: var(--sign-wash);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* On narrow screens the line runs down the page. */
+@media (max-width: 680px) {
+  .route-panel {
+    padding: 18px 16px;
+  }
+
+  .line {
+    grid-template-columns: minmax(0, 1fr);
+
+    li:not(:first-child)::before {
+      top: -50%;
+      bottom: 50%;
+      left: calc($here / 2 - $track / 2 + 4px);
+      right: auto;
+      width: $track;
+      height: auto;
+    }
+
+    button {
+      flex-direction: row;
+      gap: 14px;
+      padding: 3px 4px;
+    }
+  }
+}

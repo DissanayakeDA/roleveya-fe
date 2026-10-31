@@ -1,0 +1,118 @@
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Jobs</h1>
+      <p class="page-sub">
+        @if (!loading() || total()) {
+          {{ total() }} {{ total() === 1 ? 'job' : 'jobs' }}{{ filtered() ? ' match your filters' : ' tracked' }}
+        } @else {
+          Loading…
+        }
+      </p>
+    </div>
+    <a routerLink="/jobs/new" class="btn btn-primary"><app-icon name="plus" [size]="18" />Add a job</a>
+  </header>
+
+  <div class="toolbar">
+    <div class="search">
+      <label for="search" class="sr-only">Search jobs</label>
+      <input
+        id="search"
+        type="search"
+        class="control"
+        placeholder="Search by title, company or location"
+        [value]="filters().q"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </div>
+    <div class="sort">
+      <label for="sort">Sort by</label>
+      <select id="sort" class="control" [value]="filters().sort" (change)="sortChanged($any($event.target).value)">
+        @for (option of sorts; track option.value) {
+          <option [value]="option.value" [selected]="option.value === filters().sort">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="status-filter" role="group" aria-label="Filter by stage">
+    @for (status of statuses; track status) {
+      <button
+        type="button"
+        class="chip"
+        [class.on]="filters().status.includes(status)"
+        [attr.aria-pressed]="filters().status.includes(status)"
+        (click)="toggleStatus(status)"
+      >
+        {{ statusLabels[status] }}
+      </button>
+    }
+    @if (filtered()) {
+      <button type="button" class="link-btn clear" (click)="clearFilters()">Clear filters</button>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="alert" role="alert">{{ error() }}</p>
+  } @else if (!loading() && !items().length) {
+    <div class="panel empty">
+      @if (filtered()) {
+        <h2>No jobs match</h2>
+        <p>Try another search or stage, or clear the filters to see everything.</p>
+        <button type="button" class="btn btn-secondary" (click)="clearFilters()">Clear filters</button>
+      } @else {
+        <h2>Your list is empty</h2>
+        <p>Add a role you're interested in. You can track it from saved through to offer.</p>
+        <a routerLink="/jobs/new" class="btn btn-primary">Add your first job</a>
+      }
+    </div>
+  } @else {
+    <div class="panel list" [class.refreshing]="loading()">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Role</th>
+            <th scope="col">Stage</th>
+            <th scope="col" class="hide-sm">Location</th>
+            <th scope="col" class="hide-md">Pay</th>
+            <th scope="col" class="hide-sm">Applied</th>
+            <th scope="col" class="hide-md">Deadline</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (job of items(); track job.id) {
+            <tr>
+              <td class="role">
+                <a [routerLink]="['/jobs', job.id]">{{ job.title | roleTitle }}</a>
+                <span>{{ job.company }}</span>
+                @if (job.priority === 'high') {
+                  <span class="priority">High priority</span>
+                }
+              </td>
+              <td><app-status-badge [status]="job.status" /></td>
+              <td class="hide-sm">
+                {{ job.location || '' }}
+                @if (job.work_mode && job.location?.toLowerCase() !== workModes[job.work_mode].toLowerCase()) {
+                  <span class="muted">{{ job.location ? '(' + workModes[job.work_mode] + ')' : workModes[job.work_mode] }}</span>
+                }
+              </td>
+              <td class="hide-md">{{ salary(job.salary_min, job.salary_max, job.salary_currency) }}</td>
+              <td class="hide-sm nowrap">{{ job.applied_on ? (job.applied_on | date: 'MMM d') : '' }}</td>
+              <td class="hide-md nowrap">{{ job.deadline ? (job.deadline | date: 'MMM d, y') : '' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (pages() > 1) {
+      <nav class="pager" aria-label="Pages">
+        <button type="button" class="btn btn-secondary btn-sm" [disabled]="filters().page <= 1"
+          (click)="apply({ page: filters().page - 1 })">Previous</button>
+        <span>Page {{ filters().page }} of {{ pages() }}</span>
+        <button type="button" class="btn btn-secondary btn-sm" [disabled]="filters().page >= pages()"
+          (click)="apply({ page: filters().page + 1 })">Next</button>
+      </nav>
+    }
+  }
+</div>

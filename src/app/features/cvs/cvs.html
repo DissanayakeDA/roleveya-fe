@@ -1,0 +1,90 @@
+<div class="page narrow">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">CVs</h1>
+      <p class="page-sub">
+        Keep each version you send out. Your default CV is preselected when you add a job, and you can see which one
+        went with each application.
+      </p>
+    </div>
+  </header>
+
+  <section class="panel upload" aria-labelledby="upload-title">
+    <h2 id="upload-title" class="section-title">Upload a CV</h2>
+    @if (selected(); as file) {
+      <div class="chosen">
+        <div class="file-line">
+          <app-icon name="cv" />
+          <span><strong>{{ file.name }}</strong> <span class="muted">{{ size(file.size) }}</span></span>
+          <button type="button" class="link-btn" (click)="clearSelection()">Choose another</button>
+        </div>
+        <div class="field">
+          <label for="label">Name it so you can tell versions apart</label>
+          <input id="label" class="control" [(ngModel)]="label" maxlength="120" placeholder="e.g. Backend roles, 2026" />
+        </div>
+        <div class="upload-actions">
+          <button type="button" class="btn btn-primary" (click)="upload()" [disabled]="uploading()">
+            {{ uploading() ? 'Uploading…' : 'Upload CV' }}
+          </button>
+        </div>
+      </div>
+    } @else {
+      <label class="drop" [class.over]="dragging()" (dragover)="onDragOver($event)" (dragleave)="dragging.set(false)"
+        (drop)="onDrop($event)">
+        <app-icon name="upload" [size]="24" />
+        <strong>Drop a PDF here, or choose a file</strong>
+        <span class="hint">PDF only, up to {{ maxMb }} MB. Files are stored privately.</span>
+        <input type="file" accept=".pdf,application/pdf" class="sr-only" #picker (change)="onPick(picker)" />
+      </label>
+    }
+  </section>
+
+  @if (error()) {
+    <p class="alert" role="alert">{{ error() }}</p>
+  } @else if (loading()) {
+    <p class="muted">Loading your CVs…</p>
+  } @else if (cvs().length) {
+    <ul class="cv-list">
+      @for (cv of cvs(); track cv.id) {
+        <li>
+          <div class="cv-main">
+            @if (renaming() === cv.id) {
+              <form class="rename" (ngSubmit)="saveRename(cv)">
+                <label [for]="'rename-' + cv.id" class="sr-only">CV name</label>
+                <input [id]="'rename-' + cv.id" class="control" name="label" [(ngModel)]="renameValue" maxlength="120" />
+                <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="renaming.set(null)">Cancel</button>
+              </form>
+            } @else {
+              <p class="cv-name">
+                {{ cv.label }}
+                @if (cv.is_default) {
+                  <span class="badge">Default</span>
+                }
+              </p>
+            }
+            <p class="cv-meta">{{ cv.original_filename }}, {{ size(cv.size_bytes) }}, uploaded {{ cv.created_at | date: 'MMM d, y' }}</p>
+          </div>
+          <div class="cv-actions">
+            @if (confirmingDelete() === cv.id) {
+              <span class="confirm-text">Delete this CV?</span>
+              <button type="button" class="btn btn-ghost btn-sm" (click)="confirmingDelete.set(null)">Keep it</button>
+              <button type="button" class="btn btn-danger btn-sm" (click)="remove(cv)">Delete CV</button>
+            } @else {
+              <button type="button" class="btn btn-secondary btn-sm" (click)="view(cv)">View</button>
+              @if (!cv.is_default) {
+                <button type="button" class="btn btn-ghost btn-sm" (click)="makeDefault(cv)">Make default</button>
+              }
+              <button type="button" class="btn btn-ghost btn-sm" (click)="startRename(cv)">Rename</button>
+              <button type="button" class="btn btn-ghost btn-sm" (click)="confirmingDelete.set(cv.id)">Delete</button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="muted none">No CVs yet. Upload one above to attach it to your applications.</p>
+  }
+</div>
+
+<app-file-viewer />

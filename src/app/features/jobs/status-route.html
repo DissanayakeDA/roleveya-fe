@@ -1,0 +1,67 @@
+<section class="route-panel" aria-labelledby="route-title">
+  <h2 id="route-title" class="sr-only">Application stage</h2>
+
+  <ol class="line" [class.closed]="closed()">
+    @for (stage of route; track stage; let i = $index) {
+      <li [class]="stationState(i)">
+        <button
+          type="button"
+          (click)="pick(stage)"
+          [disabled]="busy()"
+          [attr.aria-current]="stationState(i) === 'here' ? 'step' : null"
+          [attr.aria-pressed]="pending() === stage"
+        >
+          <span class="stop" aria-hidden="true"></span>
+          <span class="name">{{ labels[stage] }}</span>
+          @if (stationState(i) === 'here') {
+            <span class="sr-only">(current stage)</span>
+          }
+        </button>
+      </li>
+    }
+  </ol>
+
+  <div class="exits">
+    <span class="exits-label">Closed as</span>
+    @for (exit of exits; track exit) {
+      <button
+        type="button"
+        class="exit"
+        [class.here]="status() === exit"
+        [class]="'tone-' + tones[exit]"
+        (click)="pick(exit)"
+        [disabled]="busy()"
+        [attr.aria-current]="status() === exit ? 'step' : null"
+        [attr.aria-pressed]="pending() === exit"
+      >
+        <span class="terminus" aria-hidden="true"></span>
+        {{ labels[exit] }}
+      </button>
+    }
+  </div>
+
+  @if (pending(); as target) {
+    <form class="confirm" (ngSubmit)="confirm()">
+      <div class="field">
+        <label for="move-note">
+          Moving to {{ labels[target] }}. Add a note <span class="optional">(optional)</span>
+        </label>
+        <textarea
+          id="move-note"
+          class="control"
+          name="note"
+          [(ngModel)]="note"
+          rows="2"
+          maxlength="2000"
+          placeholder="e.g. Recruiter call booked for Tuesday"
+        ></textarea>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="busy()">
+          {{ busy() ? 'Saving…' : 'Move to ' + labels[target] }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

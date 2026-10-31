@@ -1,0 +1,148 @@
+<div class="page narrow">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Preferences</h1>
+      <p class="page-sub">What you're looking for. This keeps your search focused, and new jobs use your currency by default.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  }
+
+  <form class="form-panel" [formGroup]="form" (ngSubmit)="save()" [hidden]="loading()" novalidate>
+    @if (error()) {
+      <p class="alert" role="alert">{{ error() }}</p>
+    }
+
+    <section class="form-section">
+      <header>
+        <h2 class="section-title">Roles</h2>
+        <p>Press Enter after each one.</p>
+      </header>
+      <div class="form-grid">
+        <div class="field span-2">
+          <label for="titles">Job titles you're targeting</label>
+          <app-tag-input inputId="titles" formControlName="desired_titles" placeholder="e.g. Backend Engineer" />
+        </div>
+        <div class="field">
+          <label for="industries">Industries <span class="optional">(optional)</span></label>
+          <app-tag-input inputId="industries" formControlName="industries" placeholder="e.g. Fintech" />
+        </div>
+        <div class="field">
+          <label for="experience">Experience level <span class="optional">(optional)</span></label>
+          <select id="experience" class="control" formControlName="experience_level">
+            <option value="">Not specified</option>
+            @for (option of experienceOptions; track option[0]) {
+              <option [value]="option[0]">{{ option[1] }}</option>
+            }
+          </select>
+        </div>
+        <div class="field span-2">
+          <label for="skills">Key skills <span class="optional">(optional)</span></label>
+          <app-tag-input inputId="skills" formControlName="key_skills" placeholder="e.g. Python, PostgreSQL" />
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <header>
+        <h2 class="section-title">Where and how</h2>
+        <p>Choose every option that works for you.</p>
+      </header>
+      <div class="form-grid">
+        <div class="field span-2">
+          <label for="locations">Locations</label>
+          <app-tag-input inputId="locations" formControlName="preferred_locations" placeholder="e.g. Colombo, Remote" />
+        </div>
+        <fieldset class="field span-2 plain" formArrayName="work_modes">
+          <legend class="label">Work arrangement</legend>
+          <div class="choices">
+            @for (option of workModeOptions; track option[0]; let i = $index) {
+              <label><input type="checkbox" [formControlName]="i" />{{ option[1] }}</label>
+            }
+          </div>
+        </fieldset>
+        <fieldset class="field span-2 plain" formArrayName="employment_types">
+          <legend class="label">Employment type</legend>
+          <div class="choices">
+            @for (option of employmentOptions; track option[0]; let i = $index) {
+              <label><input type="checkbox" [formControlName]="i" />{{ option[1] }}</label>
+            }
+          </div>
+        </fieldset>
+        <div class="field span-2">
+          <label class="check">
+            <input type="checkbox" formControlName="open_to_relocation" />
+            I'm open to relocating
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <header>
+        <h2 class="section-title">Pay</h2>
+        <p>The range you'd accept.</p>
+      </header>
+      <div class="form-grid cols-3">
+        <div class="field">
+          <label for="salary_min">Minimum</label>
+          <input id="salary_min" class="control" type="number" min="0" step="1000" formControlName="salary_min" />
+        </div>
+        <div class="field">
+          <label for="salary_max">Maximum</label>
+          <input id="salary_max" class="control" type="number" min="0" step="1000" formControlName="salary_max" />
+        </div>
+        <div class="field">
+          <label for="salary_currency">Currency</label>
+          <input id="salary_currency" class="control" formControlName="salary_currency" maxlength="3" placeholder="LKR" />
+          @if (form.controls.salary_currency.touched && form.controls.salary_currency.invalid) {
+            <span class="error-text">Use a 3-letter code such as LKR or USD.</span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <header>
+        <h2 class="section-title">Notes</h2>
+        <p>Anything else that matters, like notice period or visa needs.</p>
+      </header>
+      <div class="field">
+        <label for="notes" class="sr-only">Notes</label>
+        <textarea id="notes" class="control" formControlName="notes" rows="4" maxlength="2000"></textarea>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <header>
+        <h2 class="section-title">Account</h2>
+        <p>Used to sign in.</p>
+      </header>
+      <dl class="account">
+        <div>
+          <dt>Name</dt>
+          <dd>{{ auth.user()?.full_name || 'Not set' }}</dd>
+        </div>
+        <div>
+          <dt>Email</dt>
+          <dd>{{ auth.user()?.email }}</dd>
+        </div>
+        <div>
+          <dt>Phone</dt>
+          <dd>{{ auth.user()?.phone_number || 'Not set' }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <div class="form-actions">
+      @if (updatedAt()) {
+        <span class="muted saved-at">Last saved {{ updatedAt() | date: 'MMM d, y, h:mm a' }}</span>
+      }
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save preferences' }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,147 @@
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">{{ auth.firstName() ? 'Hi, ' + auth.firstName() : 'Dashboard' }}</h1>
+      <p class="page-sub">Here's where your job search stands today.</p>
+    </div>
+    <a routerLink="/jobs/new" class="btn btn-primary"><app-icon name="plus" [size]="18" />Add a job</a>
+  </header>
+
+  @if (error()) {
+    <p class="alert" role="alert">{{ error() }}</p>
+  } @else if (summary(); as s) {
+    @if (s.total_jobs === 0) {
+      <section class="panel start">
+        <h2>Start with one job</h2>
+        <p>
+          Add a role you've applied for or want to apply for. Each change of stage is recorded, so this page fills in
+          as you go.
+        </p>
+        <div class="start-actions">
+          <a routerLink="/jobs/new" class="btn btn-primary">Add a job</a>
+          <a routerLink="/cvs" class="btn btn-secondary">Upload your CV</a>
+          <a routerLink="/preferences" class="btn btn-ghost">Set your preferences</a>
+        </div>
+      </section>
+    } @else {
+      <section class="panel figures" aria-label="Summary">
+        <div class="hero">
+          <p class="hero-value">{{ s.active_applications }}</p>
+          <p class="hero-label">
+            {{ s.active_applications === 1 ? 'application in progress' : 'applications in progress' }}
+          </p>
+          <p class="hero-note">{{ s.applied_last_30_days }} sent in the last 30 days</p>
+        </div>
+        <dl class="tiles">
+          <div>
+            <dt>Response rate</dt>
+            <dd>{{ percent(s.response_rate) }}</dd>
+            <p>of applications got a reply</p>
+          </div>
+          <div>
+            <dt>Interview rate</dt>
+            <dd>{{ percent(s.interview_rate) }}</dd>
+            <p>reached interviews or further</p>
+          </div>
+          <div>
+            <dt>Saved to apply</dt>
+            <dd>{{ s.by_status.saved }}</dd>
+            <p><a routerLink="/jobs" [queryParams]="{ status: 'saved' }">See saved jobs</a></p>
+          </div>
+          <div>
+            <dt>Offers</dt>
+            <dd>{{ offers() }}</dd>
+            <p>including accepted</p>
+          </div>
+        </dl>
+      </section>
+
+      <div class="grid">
+        @if (pipeline(); as p) {
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="section-title">By stage</h2>
+              <a routerLink="/jobs" class="small-link">All jobs</a>
+            </div>
+            <ul class="stages">
+              @for (row of p.route; track row.status) {
+                <li>
+                  <a [routerLink]="['/jobs']" [queryParams]="{ status: row.status }">
+                    <span class="stage-name">{{ labels[row.status] }}</span>
+                    <span class="track">
+                      @if (row.count) {
+                        <span class="fill" [style.width.%]="row.width"></span>
+                      }
+                      <span class="count" [class.zero]="!row.count">{{ row.count }}</span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ul>
+            <ul class="stages closed" aria-label="Closed applications">
+              @for (row of p.exits; track row.status) {
+                <li>
+                  <a [routerLink]="['/jobs']" [queryParams]="{ status: row.status }">
+                    <span class="stage-name">{{ labels[row.status] }}</span>
+                    <span class="track">
+                      @if (row.count) {
+                        <span class="fill" [style.width.%]="row.width"></span>
+                      }
+                      <span class="count" [class.zero]="!row.count">{{ row.count }}</span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        <section class="panel">
+          <app-weekly-chart [weeks]="s.weekly_applications" />
+        </section>
+
+        <section class="panel">
+          <h2 class="section-title">Deadlines coming up</h2>
+          @if (s.upcoming_deadlines.length) {
+            <ul class="rows">
+              @for (job of s.upcoming_deadlines; track job.id) {
+                <li>
+                  <a [routerLink]="['/jobs', job.id]">
+                    <strong>{{ job.title | roleTitle }}</strong>
+                    <span>{{ job.company }}</span>
+                  </a>
+                  <span class="due">
+                    {{ due(job.deadline) }}
+                    <time [attr.datetime]="job.deadline">{{ job.deadline | date: 'MMM d' }}</time>
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="quiet">No deadlines on saved jobs. Add one when you save a role so it shows here.</p>
+          }
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2 class="section-title">Recent activity</h2>
+            <a routerLink="/history" class="small-link">Full history</a>
+          </div>
+          <ul class="rows activity">
+            @for (event of s.recent_activity; track event.id) {
+              <li>
+                <a [routerLink]="['/jobs', event.job.id]">
+                  <strong>{{ event.job.title | roleTitle }} at {{ event.job.company }}</strong>
+                  <span>{{ describe(event) }}{{ event.note ? ': ' + event.note : '' }}</span>
+                </a>
+                <time [attr.datetime]="event.occurred_at">{{ event.occurred_at | date: 'MMM d' }}</time>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+    }
+  } @else {
+    <p class="muted">Loading your dashboard…</p>
+  }
+</div>

@@ -1,0 +1,65 @@
+<div class="panel-head">
+  <div>
+    <h2 class="section-title">Applications per week</h2>
+    <p class="sub">{{ plural(total()) }} sent in the last {{ weeks().length }} weeks</p>
+  </div>
+  <button type="button" class="btn btn-ghost btn-sm" (click)="showTable.set(!showTable())" [attr.aria-pressed]="showTable()">
+    {{ showTable() ? 'Show chart' : 'Show table' }}
+  </button>
+</div>
+
+@if (showTable()) {
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Week starting</th>
+        <th scope="col" class="num">Applications</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (week of weeks(); track week.week_start) {
+        <tr>
+          <td>{{ week.week_start | date: 'MMM d, y' }}</td>
+          <td class="num">{{ week.count }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+} @else {
+  <div class="chart">
+    <div class="axis" aria-hidden="true">
+      @for (tick of ticks(); track tick) {
+        <span [style.bottom.%]="tickPosition(tick)">{{ tick }}</span>
+      }
+    </div>
+    <div class="plot-wrap">
+      <div class="plot">
+        @for (tick of ticks(); track tick) {
+          <span class="grid" [class.base]="tick === 0" [style.bottom.%]="tickPosition(tick)" aria-hidden="true"></span>
+        }
+        <ul class="columns" aria-label="Applications sent each week">
+          @for (week of weeks(); track week.week_start; let i = $index) {
+            <li tabindex="0" [style.--h]="height(week.count) + '%'" [attr.aria-label]="'Week of ' + (week.week_start | date: 'MMM d') + ': ' + plural(week.count)">
+              @if (week.count > 0) {
+                <span class="bar" [style.height.%]="height(week.count)">
+                  @if (i === lastIndex()) {
+                    <span class="cap">{{ week.count }}</span>
+                  }
+                </span>
+              }
+              <span class="tip" role="tooltip">
+                <strong>{{ plural(week.count) }}</strong>
+                Week of {{ week.week_start | date: 'MMM d' }}
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+      <ol class="x" aria-hidden="true">
+        @for (week of weeks(); track week.week_start) {
+          <li>{{ week.week_start | date: 'MMM d' }}</li>
+        }
+      </ol>
+    </div>
+  </div>
+}

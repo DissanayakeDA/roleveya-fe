@@ -1,0 +1,42 @@
+# Production: serve the built app and forward /api to the backend on the same origin.
+# The browser only ever sees https://your-domain/api/..., never the backend's real address.
+#
+# The backend address comes from the API_UPSTREAM environment variable (e.g. http://127.0.0.1:8000 or
+# http://roleveya-be:8000). The official nginx Docker image fills it in automatically when this file is
+# mounted as /etc/nginx/templates/default.conf.template. Without Docker, render it yourself:
+#   API_UPSTREAM=http://127.0.0.1:8000 envsubst '${API_UPSTREAM}' < nginx.conf.template > /etc/nginx/conf.d/default.conf
+#
+#   npm run build  ->  copy dist/roleveya-fe/browser/* to the root below
+#   backend: APP_ENV=production, COOKIE_SECURE=true
+
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location /api/ {
+        proxy_pass ${API_UPSTREAM};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 6m;
+    }
+
+    # Hashed bundles can be cached for a long time; index.html must always be fresh.
+    location ~* \.(?:js|css|woff2?|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache";
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header Referrer-Policy no-referrer always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    }
+}

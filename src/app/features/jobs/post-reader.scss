@@ -1,0 +1,81 @@
+:host {
+  display: grid;
+  gap: 14px;
+}
+
+.drop {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 22px;
+  border: 1.5px dashed var(--keyline-strong);
+  border-radius: var(--radius-panel);
+  background: var(--paper);
+  color: var(--ink-2);
+  transition: border-color 120ms ease, background-color 120ms ease;
+
+  p {
+    color: var(--ink);
+    max-width: 52ch;
+  }
+
+  &.dragging {
+    border-color: var(--sign);
+    background: var(--sign-wash);
+  }
+}
+
+// The real file input is visually hidden inside the label, so show its keyboard focus on the label.
+.picker:has(input:focus-visible) {
+  outline: 2px solid var(--sign);
+  outline-offset: 2px;
+}
+
+.shot {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+
+  img {
+    display: block;
+    width: 100%;
+    max-height: 190px;
+    object-fit: cover;
+    object-position: top;
+    border: 1px solid var(--keyline);
+    border-radius: var(--radius-control);
+    background: var(--paper);
+  }
+
+  @media (max-width: 520px) {
+    grid-template-columns: minmax(0, 1fr);
+
+    img {
+      max-height: 220px;
+    }
+  }
+}
+
+.shot-info {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.file-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.status {
+  color: var(--sign-deep);
+  font-weight: 650;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}

@@ -1,0 +1,199 @@
+<div class="page">
+  <a routerLink="/jobs" class="back"><app-icon name="back" [size]="18" />All jobs</a>
+
+  @if (loadError()) {
+    <div class="panel empty">
+      <h2>Job not available</h2>
+      <p>{{ loadError() }}</p>
+      <a routerLink="/jobs" class="btn btn-secondary">Back to jobs</a>
+    </div>
+  } @else if (job(); as job) {
+    <header class="head">
+      <div class="title-block">
+        <h1 class="page-title">{{ job.title | roleTitle }}</h1>
+        <p class="company">{{ job.company }}</p>
+        <ul class="meta">
+          @if (job.location) {
+            <li>{{ job.location }}</li>
+          }
+          @if (job.work_mode) {
+            <li>{{ workModes[job.work_mode] }}</li>
+          }
+          @if (job.employment_type) {
+            <li>{{ employmentTypes[job.employment_type] }}</li>
+          }
+          @if (salary()) {
+            <li>{{ salary() }}</li>
+          }
+          @if (job.job_url) {
+            <li>
+              <a [href]="job.job_url" target="_blank" rel="noopener noreferrer nofollow" class="posting">
+                Open job posting <app-icon name="external" [size]="15" />
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+      <div class="head-actions">
+        @if (confirmingDelete()) {
+          <span class="confirm-text">Delete this job and its history?</span>
+          <button type="button" class="btn btn-ghost" (click)="confirmingDelete.set(false)">Keep it</button>
+          <button type="button" class="btn btn-danger" (click)="deleteJob()" [disabled]="deleting()">
+            {{ deleting() ? 'Deleting…' : 'Delete job' }}
+          </button>
+        } @else {
+          <a [routerLink]="['/jobs', job.id, 'edit']" class="btn btn-secondary">Edit details</a>
+          <button type="button" class="btn btn-ghost" (click)="confirmingDelete.set(true)">Delete</button>
+        }
+      </div>
+    </header>
+
+    <app-status-route [status]="job.status" [reached]="reached()" [busy]="moving()" (move)="moveTo($event)" />
+
+    <div class="columns">
+      <div class="main-col">
+        <section class="panel">
+          <h2 class="section-title">Application details</h2>
+          <dl class="facts">
+            <div>
+              <dt>Stage</dt>
+              <dd><app-status-badge [status]="job.status" /></dd>
+            </div>
+            <div>
+              <dt>Priority</dt>
+              <dd>{{ priorities[job.priority] }}</dd>
+            </div>
+            <div>
+              <dt>Applied on</dt>
+              <dd>{{ job.applied_on ? (job.applied_on | date: 'mediumDate') : 'Not yet' }}</dd>
+            </div>
+            <div>
+              <dt>Deadline</dt>
+              <dd>
+                @if (job.deadline) {
+                  {{ job.deadline | date: 'mediumDate' }}
+                  @if (job.status === 'saved') {
+                    <span class="muted">({{ due(job.deadline) }})</span>
+                  }
+                } @else {
+                  None
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Found via</dt>
+              <dd>{{ job.source || 'Not recorded' }}</dd>
+            </div>
+            <div>
+              <dt>CV sent</dt>
+              <dd>
+                @if (job.cv) {
+                  <button type="button" class="link-btn" (click)="openCv()">{{ job.cv.label }}</button>
+                } @else {
+                  None selected
+                }
+              </dd>
+            </div>
+            @if (job.contact_name || job.contact_email) {
+              <div class="wide">
+                <dt>Contact</dt>
+                <dd>
+                  {{ job.contact_name }}
+                  @if (job.contact_email) {
+                    <a [href]="'mailto:' + job.contact_email">{{ job.contact_email }}</a>
+                  }
+                </dd>
+              </div>
+            }
+          </dl>
+        </section>
+
+        @if (job.description) {
+          <section class="panel">
+            <h2 class="section-title">About the role</h2>
+            <p class="prose">{{ job.description }}</p>
+          </section>
+        }
+
+        @if (job.notes) {
+          <section class="panel">
+            <h2 class="section-title">Your notes</h2>
+            <p class="prose">{{ job.notes }}</p>
+          </section>
+        }
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2 class="section-title">Job poster</h2>
+            @if (job.has_poster) {
+              <div class="poster-actions">
+                <label class="btn btn-ghost btn-sm">
+                  Replace
+                  <input type="file" class="sr-only" accept=".pdf,.png,.jpg,.jpeg,.webp" #replace
+                    (change)="uploadPoster(replace)" [disabled]="uploading()" />
+                </label>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="removePoster()">Remove</button>
+              </div>
+            }
+          </div>
+          @if (job.has_poster) {
+            @if (posterPreview()) {
+              <button type="button" class="poster-thumb" (click)="openPoster()" aria-label="View poster full size">
+                <img [src]="posterPreview()" alt="Job poster" />
+              </button>
+            } @else {
+              <button type="button" class="btn btn-secondary" (click)="openPoster()">
+                View {{ job.poster_filename || 'poster' }}
+              </button>
+            }
+          } @else {
+            <label class="drop">
+              <app-icon name="upload" />
+              <span>
+                <strong>{{ uploading() ? 'Uploading…' : 'Upload the job ad' }}</strong>
+                <span class="hint">Keep a copy in case the listing comes down. PDF, PNG, JPG or WebP, up to 5 MB.</span>
+              </span>
+              <input type="file" class="sr-only" accept=".pdf,.png,.jpg,.jpeg,.webp" #poster
+                (change)="uploadPoster(poster)" [disabled]="uploading()" />
+            </label>
+          }
+        </section>
+      </div>
+
+      <aside class="panel history">
+        <h2 class="section-title">History</h2>
+        <form class="note-form" (ngSubmit)="addNote()">
+          <label for="note" class="sr-only">Add a note</label>
+          <textarea id="note" class="control" name="note" [(ngModel)]="noteText" rows="2" maxlength="2000"
+            placeholder="Add a note, e.g. Sent thank-you email"></textarea>
+          <button type="submit" class="btn btn-secondary btn-sm" [disabled]="savingNote() || !noteText.trim()">
+            {{ savingNote() ? 'Saving…' : 'Add note' }}
+          </button>
+        </form>
+        <ol class="timeline">
+          @for (event of events(); track event.id) {
+            <li [class]="'kind-' + event.event_type">
+              <span class="dot" aria-hidden="true"></span>
+              <div>
+                <p class="what">{{ describe(event) }}</p>
+                @if (event.note) {
+                  <p class="note">{{ event.note }}</p>
+                }
+                <p class="when">
+                  <time [attr.datetime]="event.occurred_at">{{ event.occurred_at | date: 'MMM d, y, h:mm a' }}</time>
+                  @if (event.event_type === 'note') {
+                    <button type="button" class="link-btn remove" (click)="removeNote(event)">Remove</button>
+                  }
+                </p>
+              </div>
+            </li>
+          }
+        </ol>
+      </aside>
+    </div>
+  } @else {
+    <p class="muted">Loading job…</p>
+  }
+</div>
+
+<app-file-viewer />

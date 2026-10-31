@@ -1,0 +1,78 @@
+input[type='file'] {
+  font: inherit;
+  font-size: 0.925rem;
+}
+
+.reader-slot {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+// Marks a field the post filled in, until the user edits it.
+.from-post {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--sign-wash);
+  color: var(--sign-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+.control.filled {
+  border-color: #9db4dc;
+  background: #f8faff;
+}
+
+.more {
+  border-top: 1px solid var(--keyline);
+
+  > summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 14px;
+    padding: 22px 0;
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    // Chevron: points right when closed, down when open.
+    &::before {
+      content: '';
+      align-self: center;
+      width: 8px;
+      height: 8px;
+      margin: 0 2px 0 3px;
+      border-right: 2px solid var(--ink-2);
+      border-bottom: 2px solid var(--ink-2);
+      transform: rotate(-45deg);
+      transition: transform 120ms ease;
+    }
+
+    &:hover .more-title {
+      color: var(--sign);
+    }
+  }
+
+  &[open] > summary::before {
+    transform: rotate(45deg);
+  }
+
+  // The shared rule drops the first section's top border; inside here every section needs one.
+  > .form-section:first-of-type {
+    padding-top: 28px;
+    border-top: 1px solid var(--keyline);
+  }
+}
+
+.more-title {
+  font-size: var(--step-1);
+  font-weight: 750;
+  letter-spacing: -0.005em;
+}

@@ -1,0 +1,153 @@
+:host {
+  display: block;
+}
+
+.sub {
+  margin-top: 2px;
+  font-size: 0.9rem;
+  color: var(--ink-3);
+}
+
+$plot: 180px;
+
+.chart {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 8px;
+  padding-top: 18px;
+}
+
+.axis {
+  position: relative;
+  height: $plot;
+
+  span {
+    position: absolute;
+    right: 0;
+    transform: translateY(50%);
+    font-size: 0.78rem;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+}
+
+.plot {
+  position: relative;
+  height: $plot;
+}
+
+.grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--grid);
+
+  &.base {
+    background: var(--keyline-strong);
+  }
+}
+
+.columns,
+.x {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.columns {
+  position: absolute;
+  inset: 0;
+
+  li {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 100%;
+    border-radius: 4px;
+    cursor: default;
+
+    &:hover,
+    &:focus-visible {
+      background: rgba(42, 99, 201, 0.06);
+
+      .bar {
+        background: #1f55b4;
+      }
+
+      .tip {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
+      .cap {
+        visibility: hidden;
+      }
+    }
+  }
+}
+
+.bar {
+  position: relative;
+  width: min(24px, 60%);
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--data);
+}
+
+.cap {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  font-weight: 750;
+  color: var(--ink);
+}
+
+/* Sits just above its column's bar; --h is the bar height. */
+.tip {
+  position: absolute;
+  bottom: calc(var(--h, 0%) + 10px);
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 100ms ease, transform 100ms ease;
+
+  strong {
+    color: #fff;
+    font-size: 0.9rem;
+  }
+}
+
+.x {
+  margin-top: 8px;
+
+  li {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 520px) {
+    li:nth-child(even) {
+      visibility: hidden;
+    }
+  }
+}

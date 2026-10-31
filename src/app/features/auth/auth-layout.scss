@@ -1,0 +1,147 @@
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sign {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 48px;
+  margin: 14px;
+  padding: 44px 48px 52px;
+  border-radius: var(--radius-sign);
+  background: var(--sign);
+  color: #fff;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border: 2.5px solid rgba(255, 255, 255, 0.92);
+    border-radius: calc(var(--radius-sign) - 5px);
+    pointer-events: none;
+  }
+}
+
+.brand {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.pitch {
+  h1 {
+    max-width: 13ch;
+    font-size: clamp(2.3rem, 4vw, var(--step-5));
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.04;
+  }
+
+  p {
+    margin-top: 18px;
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.86);
+    max-width: 40ch;
+  }
+}
+
+/* A short stretch of the status route, the same drawing a job's page uses. */
+.route {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+
+  li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.72);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Each segment runs from a station to the next one; travelled segments are solid. */
+    &.done::before {
+      background: #fff;
+    }
+
+    &:first-child::before {
+      left: 12px;
+    }
+  }
+
+  span {
+    position: relative;
+    width: 25px;
+    height: 25px;
+    border: 4px solid #fff;
+    border-radius: 50%;
+    background: var(--sign);
+  }
+
+  .done {
+    color: #fff;
+  }
+
+  .here {
+    color: #fff;
+
+    span {
+      width: 30px;
+      height: 30px;
+      margin: -2.5px 0 -2.5px -2.5px;
+      background: var(--signal);
+    }
+  }
+}
+
+.form-side {
+  display: grid;
+  place-items: center;
+  padding: 48px 28px;
+}
+
+.form-wrap {
+  width: min(420px, 100%);
+}
+
+@media (max-width: 900px) {
+  .auth {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sign {
+    gap: 22px;
+    padding: 28px 28px 32px;
+  }
+
+  .pitch h1 {
+    font-size: 2rem;
+  }
+
+  .pitch p,
+  .route {
+    display: none;
+  }
+
+  .form-side {
+    padding-top: 20px;
+    place-items: start center;
+  }
+}

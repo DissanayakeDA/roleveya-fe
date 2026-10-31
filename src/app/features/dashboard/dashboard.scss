@@ -1,0 +1,228 @@
+.start {
+  padding: 36px;
+
+  h2 {
+    font-size: var(--step-2);
+    font-weight: 800;
+  }
+
+  p {
+    max-width: 58ch;
+    margin: 8px 0 22px;
+    color: var(--ink-2);
+  }
+}
+
+.start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* One hero figure, then the supporting numbers in a quiet row. */
+.figures {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 2fr);
+  gap: 28px;
+  padding: 28px;
+  margin-bottom: 20px;
+
+  @media (max-width: 860px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.hero-value {
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+.hero-label {
+  margin-top: 6px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.hero-note {
+  margin-top: 4px;
+  font-size: 0.925rem;
+  color: var(--ink-3);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+
+  > div {
+    padding: 2px 20px;
+    border-left: 1px solid var(--keyline);
+  }
+
+  dt {
+    font-size: 0.9rem;
+    font-weight: 650;
+    color: var(--ink-2);
+  }
+
+  dd {
+    margin: 6px 0 2px;
+    font-size: var(--step-3);
+    font-weight: 750;
+    line-height: 1.1;
+  }
+
+  p {
+    font-size: 0.85rem;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 860px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 20px;
+
+    > div:nth-child(odd) {
+      border-left: 0;
+      padding-left: 0;
+    }
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+
+  @media (max-width: 960px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.small-link {
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.stages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &.closed {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--keyline);
+  }
+
+  a {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 6px 8px;
+    margin: 0 -8px;
+    border-radius: var(--radius-control);
+    color: var(--ink);
+    text-decoration: none;
+
+    &:hover {
+      background: var(--sign-wash);
+    }
+  }
+}
+
+.stage-name {
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+/* Bars are proportional to the track; the right padding leaves room for the count at the tip. */
+.track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 40px;
+}
+
+.fill {
+  flex: none;
+  height: 10px;
+  min-width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: var(--data);
+}
+
+.count {
+  font-weight: 750;
+  font-size: 0.95rem;
+
+  &.zero {
+    color: var(--ink-3);
+    font-weight: 600;
+  }
+}
+
+.rows {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--keyline);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  a {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    color: var(--ink);
+    text-decoration: none;
+
+    &:hover strong {
+      color: var(--sign);
+      text-decoration: underline;
+    }
+
+    span {
+      color: var(--ink-2);
+      font-size: 0.925rem;
+    }
+  }
+
+  time {
+    flex: none;
+    font-size: 0.875rem;
+    color: var(--ink-3);
+  }
+}
+
+.activity a span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.due {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.quiet {
+  margin-top: 12px;
+  color: var(--ink-3);
+}

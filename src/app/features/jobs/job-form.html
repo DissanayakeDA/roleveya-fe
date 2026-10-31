@@ -1,0 +1,296 @@
+<div class="page narrow">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">{{ editing() ? 'Edit job' : 'Add a job' }}</h1>
+      <p class="page-sub">
+        {{ editing() ? 'Update the details. To change the stage, use the route on the job page.' : 'Add a screenshot of the post or paste its text, check what was filled in, then save.' }}
+      </p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  }
+
+  <form class="form-panel" [formGroup]="form" (ngSubmit)="submit()" [hidden]="loading()" novalidate>
+    @if (error()) {
+      <p class="alert" role="alert">{{ error() }}</p>
+    }
+
+    @if (!editing()) {
+      <section class="form-section">
+        <header>
+          <h2 class="section-title">The post</h2>
+          <p>Fill the form from a LinkedIn screenshot or copied text.</p>
+        </header>
+        <div class="reader-slot">
+          <app-post-reader (read)="applyRead($event)" (keepScreenshot)="screenshot.set($event)" />
+          @if (fillNote(); as note) {
+            <p class="alert" [class.info]="note.tone === 'info'" role="status">{{ note.text }}</p>
+          }
+        </div>
+      </section>
+    }
+
+    <section class="form-section">
+      <header>
+        <h2 class="section-title">The job</h2>
+        <p>Only the company is required.</p>
+      </header>
+      <div class="form-grid">
+        <div class="field">
+          <label for="company">
+            Company
+            @if (fromPost('company')) {
+              <span class="from-post">From the post</span>
+            }
+          </label>
+          <input id="company" class="control" formControlName="company" [class.filled]="fromPost('company')" required />
+          @if (form.controls.company.touched && form.controls.company.invalid) {
+            <span class="error-text">Enter the company name.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="title">
+            Job title <span class="optional">(optional)</span>
+            @if (fromPost('title')) {
+              <span class="from-post">From the post</span>
+            }
+          </label>
+          <input id="title" class="control" formControlName="title" [class.filled]="fromPost('title')"
+            placeholder="e.g. Backend Engineer" />
+        </div>
+        <div class="field span-2">
+          <label for="description">
+            Job description
+            @if (fromPost('description')) {
+              <span class="from-post">From the post</span>
+            }
+          </label>
+          <textarea id="description" class="control" formControlName="description" rows="9" maxlength="20000"
+            [class.filled]="fromPost('description')" placeholder="Paste or type the description"></textarea>
+        </div>
+        <div class="field">
+          <label for="applied_on">Applied on</label>
+          <input id="applied_on" class="control" type="date" formControlName="applied_on"
+            [attr.aria-describedby]="editing() ? null : 'applied-hint'" />
+          @if (!editing()) {
+            <span class="hint" id="applied-hint">Leave it empty if you haven't applied yet.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="cv_id">CV sent</label>
+          <select id="cv_id" class="control" formControlName="cv_id">
+            <option value="">None</option>
+            @for (cv of cvs(); track cv.id) {
+              <option [value]="cv.id">{{ cv.label }}{{ cv.is_default ? ' (default)' : '' }}</option>
+            }
+          </select>
+          @if (!cvs().length) {
+            <span class="hint"><a routerLink="/cvs">Upload a CV</a> to attach it to applications.</span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <details class="more" [open]="moreOpen()" (toggle)="onToggle($event)">
+      <summary>
+        <span class="more-title">More details</span>
+        <span class="hint">{{ detailsHint() }}</span>
+      </summary>
+
+      <section class="form-section">
+        <header>
+          <h2 class="section-title">Application</h2>
+          <p>Stage, deadline and how much you want it.</p>
+        </header>
+        <div class="form-grid">
+          @if (!editing()) {
+            <div class="field">
+              <label for="status">Stage</label>
+              <select id="status" class="control" formControlName="status">
+                @for (status of statuses; track status) {
+                  <option [value]="status">{{ statusLabels[status] }}</option>
+                }
+              </select>
+            </div>
+          }
+          <div class="field">
+            <label for="deadline">Application deadline</label>
+            <input id="deadline" class="control" type="date" formControlName="deadline" />
+          </div>
+          <fieldset class="field span-2 plain">
+            <legend class="label">Priority</legend>
+            <div class="choices">
+              @for (priority of priorities; track priority[0]) {
+                <label>
+                  <input type="radio" formControlName="priority" [value]="priority[0]" />
+                  {{ priority[1] }}
+                </label>
+              }
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <header>
+          <h2 class="section-title">The role</h2>
+          <p>Where it is and where you found it.</p>
+        </header>
+        <div class="form-grid">
+          <div class="field">
+            <label for="location">
+              Location
+              @if (fromPost('location')) {
+                <span class="from-post">From the post</span>
+              }
+            </label>
+            <input id="location" class="control" formControlName="location" placeholder="e.g. Colombo"
+              [class.filled]="fromPost('location')" />
+          </div>
+          <div class="field">
+            <label for="work_mode">
+              Work arrangement
+              @if (fromPost('work_mode')) {
+                <span class="from-post">From the post</span>
+              }
+            </label>
+            <select id="work_mode" class="control" formControlName="work_mode" [class.filled]="fromPost('work_mode')">
+              <option value="">Not specified</option>
+              @for (mode of workModes; track mode[0]) {
+                <option [value]="mode[0]">{{ mode[1] }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="employment_type">
+              Employment type
+              @if (fromPost('employment_type')) {
+                <span class="from-post">From the post</span>
+              }
+            </label>
+            <select id="employment_type" class="control" formControlName="employment_type"
+              [class.filled]="fromPost('employment_type')">
+              <option value="">Not specified</option>
+              @for (type of employmentTypes; track type[0]) {
+                <option [value]="type[0]">{{ type[1] }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="source">
+              Found via
+              @if (fromPost('source')) {
+                <span class="from-post">From the post</span>
+              }
+            </label>
+            <input id="source" class="control" formControlName="source" list="sources" [class.filled]="fromPost('source')" />
+            <datalist id="sources">
+              @for (source of sources; track source) {
+                <option [value]="source"></option>
+              }
+            </datalist>
+          </div>
+          <div class="field span-2">
+            <label for="job_url">
+              Link to the posting
+              @if (fromPost('job_url')) {
+                <span class="from-post">From the post</span>
+              }
+            </label>
+            <input id="job_url" class="control" type="url" formControlName="job_url" placeholder="https://"
+              [class.filled]="fromPost('job_url')" />
+            @if (form.controls.job_url.touched && form.controls.job_url.invalid) {
+              <span class="error-text">Use a full link starting with http:// or https://</span>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <header>
+          <h2 class="section-title">Pay</h2>
+          <p>As advertised, or what you discussed.</p>
+        </header>
+        <div class="form-grid cols-3">
+          <div class="field">
+            <label for="salary_min">Minimum</label>
+            <input id="salary_min" class="control" type="number" min="0" step="1000" formControlName="salary_min" inputmode="numeric" />
+          </div>
+          <div class="field">
+            <label for="salary_max">Maximum</label>
+            <input id="salary_max" class="control" type="number" min="0" step="1000" formControlName="salary_max" inputmode="numeric" />
+          </div>
+          <div class="field">
+            <label for="salary_currency">Currency</label>
+            <input id="salary_currency" class="control" formControlName="salary_currency" list="currencies" maxlength="3"
+              placeholder="LKR" />
+            <datalist id="currencies">
+              @for (currency of currencies; track currency) {
+                <option [value]="currency"></option>
+              }
+            </datalist>
+            @if (form.controls.salary_currency.touched && form.controls.salary_currency.invalid) {
+              <span class="error-text">Use a 3-letter code such as LKR or USD.</span>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <header>
+          <h2 class="section-title">Contact</h2>
+          <p>The recruiter or hiring manager.</p>
+        </header>
+        <div class="form-grid">
+          <div class="field">
+            <label for="contact_name">Name</label>
+            <input id="contact_name" class="control" formControlName="contact_name" />
+          </div>
+          <div class="field">
+            <label for="contact_email">Email</label>
+            <input id="contact_email" class="control" type="email" formControlName="contact_email" />
+            @if (form.controls.contact_email.touched && form.controls.contact_email.invalid) {
+              <span class="error-text">Enter a valid email address.</span>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <header>
+          <h2 class="section-title">Notes</h2>
+          <p>For you, and the ad itself.</p>
+        </header>
+        <div class="form-grid">
+          <div class="field span-2">
+            <label for="notes">Your notes</label>
+            <textarea id="notes" class="control" formControlName="notes" rows="3" maxlength="5000"
+              placeholder="Why it fits, who referred you, questions to ask"></textarea>
+          </div>
+          @if (!editing()) {
+            <div class="field span-2">
+              <label for="poster">Job poster</label>
+              <input id="poster" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" #poster (change)="pickPoster(poster)" />
+              <span class="hint">
+                @if (screenshot() && !posterFile()) {
+                  Your screenshot will be saved as the poster unless you choose another file.
+                } @else {
+                  A screenshot or PDF of the ad. PDF, PNG, JPG or WebP, up to 5 MB.
+                }
+              </span>
+            </div>
+          }
+        </div>
+      </section>
+    </details>
+
+    <div class="form-actions">
+      <a [routerLink]="cancelLink()" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Add job' }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,60 @@
+<div class="page narrow">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">History</h1>
+      <p class="page-sub">Every stage change and note across your applications, newest first.</p>
+    </div>
+  </header>
+
+  <div class="filter" role="group" aria-label="Show">
+    @for (option of filters; track option.label) {
+      <button type="button" class="chip" [class.on]="filter() === option.value" [attr.aria-pressed]="filter() === option.value"
+        (click)="setFilter(option.value)">
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="alert" role="alert">{{ error() }}</p>
+  } @else if (!loading() && !events().length) {
+    <div class="panel empty">
+      <h2>Nothing here yet</h2>
+      <p>When you add jobs, move them between stages or write notes, each step is listed here.</p>
+      <a routerLink="/jobs/new" class="btn btn-primary">Add a job</a>
+    </div>
+  } @else {
+    <div class="days" [class.refreshing]="loading()">
+      @for (day of days(); track day.key) {
+        <section class="day">
+          <h2>{{ day.date | date: 'EEEE, MMMM d, y' }}</h2>
+          <ol>
+            @for (event of day.events; track event.id) {
+              <li [class]="'kind-' + event.event_type">
+                <span class="dot" aria-hidden="true"></span>
+                <div class="body">
+                  <p>
+                    <a [routerLink]="['/jobs', event.job.id]">{{ event.job.title | roleTitle }} at {{ event.job.company }}</a>
+                  </p>
+                  <p class="what">{{ describe(event) }}</p>
+                  @if (event.note) {
+                    <p class="note">{{ event.note }}</p>
+                  }
+                </div>
+                <time [attr.datetime]="event.occurred_at">{{ event.occurred_at | date: 'h:mm a' }}</time>
+              </li>
+            }
+          </ol>
+        </section>
+      }
+    </div>
+
+    @if (hasMore()) {
+      <div class="more">
+        <button type="button" class="btn btn-secondary" (click)="loadMore()" [disabled]="loading()">
+          {{ loading() ? 'Loading…' : 'Show older entries' }}
+        </button>
+      </div>
+    }
+  }
+</div>

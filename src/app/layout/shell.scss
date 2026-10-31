@@ -1,0 +1,228 @@
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 60;
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+
+  &:focus {
+    top: 12px;
+  }
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+main:focus {
+  outline: none;
+}
+
+/* The navigation is a road sign: blue field, white inset keyline, white lettering. */
+.sign {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 24px);
+  margin: 12px 0 12px 12px;
+  padding: 18px 14px 14px;
+  border-radius: var(--radius-sign);
+  background: var(--sign);
+  color: #fff;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border: 2px solid rgba(255, 255, 255, 0.92);
+    border-radius: calc(var(--radius-sign) - 4px);
+    pointer-events: none;
+  }
+
+  :focus-visible {
+    outline-color: #fff;
+  }
+}
+
+.sign-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 6px 0;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.menu-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  place-items: center;
+}
+
+.sign-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.add-job {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 24px 6px 18px;
+  min-height: 42px;
+  border-radius: var(--radius-control);
+  background: #fff;
+  color: var(--sign);
+  font-weight: 800;
+  text-decoration: none;
+
+  &:hover {
+    background: #eef3fc;
+  }
+}
+
+nav ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.04rem;
+  font-weight: 650;
+  text-decoration: none;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+
+  &.active {
+    background: rgba(9, 24, 56, 0.32);
+    color: #fff;
+    font-weight: 800;
+    box-shadow: inset 4px 0 0 var(--signal);
+  }
+}
+
+.account {
+  margin-top: auto;
+  padding: 14px 8px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  line-height: 1.35;
+
+  strong {
+    font-weight: 750;
+  }
+
+  span {
+    color: rgba(255, 255, 255, 0.78);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.sign-out {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: -6px;
+  padding: 6px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: #fff;
+  font: inherit;
+  font-weight: 650;
+  font-size: 0.925rem;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sign {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    height: auto;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 0 0 var(--radius-sign) var(--radius-sign);
+
+    &::before {
+      inset: 0 5px 5px;
+      border-top: 0;
+      border-radius: 0 0 calc(var(--radius-sign) - 4px) calc(var(--radius-sign) - 4px);
+    }
+  }
+
+  .menu-toggle {
+    display: grid;
+  }
+
+  .sign-body {
+    display: none;
+  }
+
+  .sign.open .sign-body {
+    display: flex;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+
+  .add-job {
+    margin-top: 16px;
+  }
+
+  .account {
+    margin-top: 16px;
+  }
+}
